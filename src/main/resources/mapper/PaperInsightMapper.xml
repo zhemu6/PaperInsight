@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhemu.paperinsight.mapper.PaperInsightMapper">
+
+    <resultMap id="BaseResultMap" type="com.zhemu.paperinsight.model.entity.PaperInsight">
+            <id property="id" column="id" />
+            <result property="paperId" column="paper_id" />
+            <result property="summaryMarkdown" column="summary_markdown" />
+            <result property="innovationPoints" column="innovation_points" />
+            <result property="methods" column="methods" />
+            <result property="score" column="score" />
+            <result property="createTime" column="create_time" />
+            <result property="updateTime" column="update_time" />
+            <result property="isDelete" column="is_delete" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,paper_id,summary_markdown,innovation_points,methods,score,
+        create_time,update_time,is_delete
+    </sql>
+</mapper>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhemu.paperinsight.mapper.PaperInfoMapper">
+
+    <resultMap id="BaseResultMap" type="com.zhemu.paperinsight.model.entity.PaperInfo">
+            <id property="id" column="id" />
+            <result property="title" column="title" />
+            <result property="authors" column="authors" />
+            <result property="abstractInfo" column="abstract_info" />
+            <result property="keywords" column="keywords" />
+            <result property="cosUrl" column="cos_url" />
+            <result property="folderId" column="folder_id" />
+            <result property="userId" column="user_id" />
+            <result property="isPublic" column="is_public" />
+            <result property="publishDate" column="publish_date" />
+            <result property="createTime" column="create_time" />
+            <result property="updateTime" column="update_time" />
+            <result property="isDelete" column="is_delete" />
+    </resultMap>
+
+
+
+    <sql id="Base_Column_List">
+        id,title,authors,abstract_info,keywords,cos_url,
+        folder_id,user_id,is_public,publish_date,create_time,
+        update_time,is_delete
+    </sql>
+
+    <!-- 查询已删除的论文 -->
+    <select id="selectDeletedPapers" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM paper_info
+        WHERE user_id = #{userId} AND is_delete = 1
+    </select>
+
+    <!-- 还原论文 -->
+    <update id="restorePaper">
+        UPDATE paper_info
+        SET is_delete = 0, folder_id = #{folderId}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 物理删除论文 -->
+    <delete id="physicalDeletePaper">
+        DELETE FROM paper_info
+        WHERE id = #{id}
+    </delete>
+</mapper>
