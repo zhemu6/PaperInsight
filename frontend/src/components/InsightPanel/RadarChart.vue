@@ -9,6 +9,7 @@ import {
 import { CanvasRenderer } from 'echarts/renderers'
 import VChart from 'vue-echarts'
 import { ref, watch, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 use([
   CanvasRenderer,
@@ -18,18 +19,20 @@ use([
   LegendComponent,
 ])
 
+const { t } = useI18n()
+
 const props = defineProps<{
-  data: Record<String, any>
+  data: Record<string, any>
   score: number
 }>()
 
 const option = computed(() => {
   // 维度中文映射
   const labelMap: Record<string, string> = {
-    writing: '写作质量',
-    technical: '技术深度',
-    innovation: '创新性',
-    practicality: '实用性'
+    writing: t('paperDetail.radar.dimensions.writing'),
+    technical: t('paperDetail.radar.dimensions.technical'),
+    innovation: t('paperDetail.radar.dimensions.innovation'),
+    practicality: t('paperDetail.radar.dimensions.practicality')
   }
 
   // 维度满分映射
@@ -42,10 +45,10 @@ const option = computed(() => {
 
   // 默认维度 (如果 data 为空)
   const defaultDimensions = [
-    { name: '创新性', max: 30 },
-    { name: '技术深度', max: 30 },
-    { name: '实用性', max: 20 },
-    { name: '写作质量', max: 20 },
+    { name: t('paperDetail.radar.dimensions.innovation'), max: 30 },
+    { name: t('paperDetail.radar.dimensions.technical'), max: 30 },
+    { name: t('paperDetail.radar.dimensions.practicality'), max: 20 },
+    { name: t('paperDetail.radar.dimensions.writing'), max: 20 },
   ]
   
   // 尝试从 props.data 解析维度
@@ -63,7 +66,7 @@ const option = computed(() => {
   return {
     backgroundColor: 'transparent',
     title: {
-      text: `综合评分: ${props.score || '-'}`,
+      text: t('paperDetail.radar.title', { score: props.score || '-' }),
       left: 'center',
       top: '0',
       textStyle: {
@@ -103,7 +106,7 @@ const option = computed(() => {
     },
     series: [
       {
-        name: '评分维度',
+        name: t('paperDetail.radar.seriesName'),
         type: 'radar',
         data: [
           {

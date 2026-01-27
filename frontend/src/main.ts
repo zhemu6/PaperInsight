@@ -4,6 +4,7 @@ import { createApp } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { handleHotUpdate, routes } from 'vue-router/auto-routes'
 import App from './App.vue'
+import { i18n } from './i18n'
 
 // 使用 tailwind-compat.css 而不是 tailwind.css，避免按钮背景色被重置为 transparent
 // tailwind-compat.css 移除了按钮背景色的重置规则，兼容 Element Plus 等 UI 框架
@@ -35,4 +36,8 @@ if (import.meta.hot) {
 }
 
 app.use(router)
+
+// 3. 配置 i18n 国际化
+app.use(i18n)
+
 app.mount('#app')

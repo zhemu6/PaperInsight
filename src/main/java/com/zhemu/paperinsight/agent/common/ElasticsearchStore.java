@@ -1,4 +1,4 @@
-/*
+package com.zhemu.paperinsight.agent.common;/*
  * Copyright 2024-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.zhemu.paperinsight.agent.common;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.FieldValue;
-import co.elastic.clients.elasticsearch._types.mapping.*;
-import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
+import co.elastic.clients.elasticsearch._types.mapping.DenseVectorProperty;
+import co.elastic.clients.elasticsearch._types.mapping.KeywordProperty;
+import co.elastic.clients.elasticsearch._types.mapping.Property;
+import co.elastic.clients.elasticsearch._types.mapping.TextProperty;
+import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
@@ -40,6 +39,13 @@ import io.agentscope.core.rag.model.Document;
 import io.agentscope.core.rag.model.DocumentMetadata;
 import io.agentscope.core.rag.store.VDBStoreBase;
 import io.agentscope.core.rag.store.dto.SearchDocumentDto;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import javax.net.ssl.SSLContext;
+
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -49,14 +55,9 @@ import org.apache.http.ssl.SSLContextBuilder;
 import org.elasticsearch.client.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-
-import javax.net.ssl.SSLContext;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Elasticsearch vector database store implementation.
@@ -73,7 +74,7 @@ import java.util.Map;
  *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>{@code
  * // Using builder with authentication
  * try (ElasticsearchStore store = ElasticsearchStore.builder()
@@ -88,10 +89,9 @@ import java.util.Map;
  *     List<Document> results = store.search(queryEmbedding, 5, 0.7).block();
  * }
  * }</pre>
- * 
  * @author lushihao
  */
-// @Component
+//@Component
 public class ElasticsearchStore implements VDBStoreBase, AutoCloseable {
     private static final Logger log = LoggerFactory.getLogger(ElasticsearchStore.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -102,9 +102,6 @@ public class ElasticsearchStore implements VDBStoreBase, AutoCloseable {
     private static final String FIELD_DOC_ID = "doc_id";
     private static final String FIELD_CHUNK_ID = "chunk_id";
     private static final String FIELD_CONTENT = "content";
-    // 新增元数据字段
-    private static final String FIELD_PAPER_ID = "paper_id";
-    private static final String FIELD_USER_ID = "user_id";
 
     private final String indexName;
     private final int dimensions;
@@ -188,11 +185,11 @@ public class ElasticsearchStore implements VDBStoreBase, AutoCloseable {
         }
 
         return Mono.fromCallable(
-                () -> {
-                    ensureNotClosed();
-                    executeBulkAdd(documents);
-                    return null;
-                })
+                        () -> {
+                            ensureNotClosed();
+                            executeBulkAdd(documents);
+                            return null;
+                        })
                 .subscribeOn(Schedulers.boundedElastic())
                 .doOnError(e -> log.error("Failed to add documents to Elasticsearch", e))
                 .onErrorMap(
@@ -237,10 +234,10 @@ public class ElasticsearchStore implements VDBStoreBase, AutoCloseable {
         int limit = searchDocumentDto.getLimit();
         Double scoreThreshold = searchDocumentDto.getScoreThreshold();
         return Mono.fromCallable(
-                () -> {
-                    ensureNotClosed();
-                    return executeSearch(queryEmbedding, limit, scoreThreshold);
-                })
+                        () -> {
+                            ensureNotClosed();
+                            return executeSearch(queryEmbedding, limit, scoreThreshold);
+                        })
                 .subscribeOn(Schedulers.boundedElastic())
                 .doOnError(e -> log.error("Error during vector search", e))
                 .onErrorMap(e -> new VectorStoreException("Vector search failed", e));
@@ -257,29 +254,14 @@ public class ElasticsearchStore implements VDBStoreBase, AutoCloseable {
             queryVector.add((float) v);
         }
 
-        // 构建 KNN 查询
-        // 注意：这里尝试检查 SearchContext (如果有的话) 来获取过滤条件
-        // 由于 VDBStoreBase 接口限制，我们暂时无法直接传递 filter
-        // TODO: 需要扩展 SearchDocumentDto 或者使用 ThreadLocal 传递上下文，或者在 queryEmbedding
-        // 中做特殊处理？
-        // 临时方案：如果 SearchDocumentDto 是我们自定义的子类，可以强转
-
-        // 实际上，为了支持 filter，最好是在调用 search 之前，把 filter 设置在某个地方
-        // 假设我们会在检索时传入 filter 参数
-        // 但目前标准接口不支持。
-        // 我们先只实现基本的 KNN，并在 ChatAgent 中过滤（不理想，性能差）
-        // 或者，我们可以 hack 一下，在 ChatAgent 中调用这个 store 的特有方法 searchWithFilter
-
         SearchRequest searchRequest = SearchRequest.of(
                 s -> s.index(indexName)
                         .knn(
                                 k -> k.field(FIELD_VECTOR)
                                         .queryVector(queryVector)
                                         .k(limit)
-                                        .numCandidates(Math.max(limit * 2, 50))
-                        // 这里可以添加 filter
-                        // .filter(...)
-                        )
+                                        .numCandidates(
+                                                Math.max(limit * 2, 50)))
                         .size(limit)
                         .minScore(scoreThreshold != null ? scoreThreshold : 0.0));
 
@@ -291,56 +273,6 @@ public class ElasticsearchStore implements VDBStoreBase, AutoCloseable {
             if (doc != null) {
                 results.add(doc);
             }
-        }
-        return results;
-    }
-
-    /**
-     * 自定义带过滤的搜索方法 (供 ChatAgent 直接调用)
-     */
-    public Mono<List<Document>> searchWithFilter(double[] queryEmbedding, int limit, Double scoreThreshold,
-            Long paperId, Long userId) {
-        return Mono.fromCallable(
-                () -> {
-                    ensureNotClosed();
-                    return executeSearchWithFilter(queryEmbedding, limit, scoreThreshold, paperId, userId);
-                })
-                .subscribeOn(Schedulers.boundedElastic());
-    }
-
-    private List<Document> executeSearchWithFilter(double[] queryEmbedding, int limit, Double scoreThreshold,
-            Long paperId, Long userId) throws Exception {
-        List<Float> queryVector = new ArrayList<>();
-        for (double v : queryEmbedding) {
-            queryVector.add((float) v);
-        }
-
-        // 构建 Filter Query
-        List<Query> filters = new ArrayList<>();
-        if (paperId != null) {
-            filters.add(TermQuery.of(t -> t.field(FIELD_PAPER_ID).value(FieldValue.of(paperId)))._toQuery());
-        }
-        if (userId != null) {
-            filters.add(TermQuery.of(t -> t.field(FIELD_USER_ID).value(FieldValue.of(userId)))._toQuery());
-        }
-
-        SearchRequest searchRequest = SearchRequest.of(
-                s -> s.index(indexName)
-                        .knn(
-                                k -> k.field(FIELD_VECTOR)
-                                        .queryVector(queryVector)
-                                        .k(limit)
-                                        .numCandidates(Math.max(limit * 2, 50))
-                                        .filter(f -> f.bool(b -> b.must(filters))))
-                        .size(limit)
-                        .minScore(scoreThreshold != null ? scoreThreshold : 0.0));
-
-        SearchResponse<Map> response = client.search(searchRequest, Map.class);
-        List<Document> results = new ArrayList<>();
-        for (Hit<Map> hit : response.hits().hits()) {
-            Document doc = mapFromEsHit(hit);
-            if (doc != null)
-                results.add(doc);
         }
         return results;
     }
@@ -359,10 +291,10 @@ public class ElasticsearchStore implements VDBStoreBase, AutoCloseable {
         }
 
         return Mono.fromCallable(
-                () -> {
-                    ensureNotClosed();
-                    return client.delete(d -> d.index(indexName).id(id));
-                })
+                        () -> {
+                            ensureNotClosed();
+                            return client.delete(d -> d.index(indexName).id(id));
+                        })
                 .subscribeOn(Schedulers.boundedElastic())
                 .map(response -> response.result().name().equals("Deleted"))
                 .onErrorMap(
@@ -414,9 +346,6 @@ public class ElasticsearchStore implements VDBStoreBase, AutoCloseable {
 
             // Define field mappings
             Property idProperty = new Property.Builder().keyword(new KeywordProperty.Builder().build()).build();
-            Property longProperty = new Property.Builder()
-                    .long_(new LongNumberProperty.Builder().index(true).build())
-                    .build();
 
             Property contentProperty = new Property.Builder()
                     .text(new TextProperty.Builder().index(false).build())
@@ -437,9 +366,6 @@ public class ElasticsearchStore implements VDBStoreBase, AutoCloseable {
             properties.put(FIELD_CHUNK_ID, idProperty);
             properties.put(FIELD_CONTENT, contentProperty);
             properties.put(FIELD_VECTOR, vectorProperty);
-            // 添加新字段
-            properties.put(FIELD_PAPER_ID, longProperty);
-            properties.put(FIELD_USER_ID, longProperty);
 
             TypeMapping mapping = new TypeMapping.Builder().properties(properties).build();
 
@@ -492,78 +418,7 @@ public class ElasticsearchStore implements VDBStoreBase, AutoCloseable {
             map.put(FIELD_CONTENT, meta.getContentText());
         }
 
-        // Extract metadata from DocumentMetadata.attributes if available, or try to
-        // parse from somewhere?
-        // AgentScope's DocumentMetadata doesn't strictly have a generic map.
-        // We will assume the caller puts these into the DocumentMetadata's "attributes"
-        // map if it exists,
-        // OR we can rely on a custom contract.
-        // For now, let's look for known keys in a hypothetical attributes map, or just
-        // assume the Document object passed in might be a subclass.
-        // CHECK: DocumentMetadata has no attributes map in standard version?
-        // If not, we might need to rely on the "docId" to carry info (e.g. paper_{id})
-        // OR assume user passed a custom object.
-        // Let's assume we can modify DocumentMetadata usage upstream or we abuse docId.
-        // BETTER: Assume DocumentMetadata has an attributes map, or we add logic to
-        // parse it.
-        // For safe implementation in standard AgentScope:
-        // We will try to cast DocumentMetadata to check for extra fields, OR just check
-        // if it has been extended.
-
-        // Strategy: We will hack it for now. We will expect the caller to pass usage of
-        // a Custom metadata class,
-        // OR we will update this method if we define a CustomDocumentMetadata.
-        // Since we are coding based on the user request, let's add the logic to extract
-        // from a Map if implemented.
-        // But since I cannot see DocumentMetadata source, I'll assume standard usage.
-
-        // HACK: Use reflection or map check if available.
-        // If not available, we can't save it from standard Document.
-        // BUT, the user's prompt implies we can custom implement.
-        // Let's assume we will pass these values via a custom mechanism or just leave
-        // place holders here.
-
-        // Actually, let's try to get it from the map if we used a Dictionary/Map based
-        // constructor upstream.
-        // If not, we will default to 0 or null.
-        // To make this work with the standard interface, we might need to pass this
-        // info differently.
-
-        // Simplified approach for now:
-        // We will leave these fields null unless we find a way to pass them.
-        // Wait, mapToEsDocument is called inside add().
-        // If we want to support this, we MUST subclass Document or DocumentMetadata.
-
-        if (doc instanceof PaperDocument) {
-            map.put(FIELD_PAPER_ID, ((PaperDocument) doc).getPaperId());
-            map.put(FIELD_USER_ID, ((PaperDocument) doc).getUserId());
-        }
-
         return map;
-    }
-
-    // We will define PaperDocument in a separate file or inner static class to make
-    // this compile.
-    public static class PaperDocument extends Document {
-        private final Long paperId;
-        private final Long userId;
-
-        public PaperDocument(DocumentMetadata metadata, double[] embedding, Long paperId, Long userId) {
-            super(metadata);
-            if (embedding != null) {
-                this.setEmbedding(embedding);
-            }
-            this.paperId = paperId;
-            this.userId = userId;
-        }
-
-        public Long getPaperId() {
-            return paperId;
-        }
-
-        public Long getUserId() {
-            return userId;
-        }
     }
 
     @SuppressWarnings("unchecked")
@@ -608,14 +463,6 @@ public class ElasticsearchStore implements VDBStoreBase, AutoCloseable {
                     doc.setEmbedding(embedding);
                 }
             }
-
-            // Reconstruct PaperDocument if fields exist
-            if (source.containsKey(FIELD_PAPER_ID) && source.containsKey(FIELD_USER_ID)) {
-                Long pId = ((Number) source.get(FIELD_PAPER_ID)).longValue();
-                Long uId = ((Number) source.get(FIELD_USER_ID)).longValue();
-                return new PaperDocument(metadata, doc.getEmbedding(), pId, uId);
-            }
-
             return doc;
         } catch (Exception e) {
             log.error("Failed to map Elasticsearch hit to Document", e);

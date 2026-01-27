@@ -11,6 +11,9 @@ import {
 import { listPaperByPage, deletePaper, updatePaper } from '~/api/paperController'
 import RecycleBin from './RecycleBin.vue'
 import PaperUpload from './PaperUpload.vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 interface BreadcrumbItem {
   id: number
@@ -27,7 +30,7 @@ interface FileItem {
 
 const loading = ref(false)
 const currentParentId = ref<number>(0)
-const breadcrumbs = ref<BreadcrumbItem[]>([{ id: 0, name: '根目录' }])
+const breadcrumbs = ref<BreadcrumbItem[]>([{ id: 0, name: t('file.manager.root') }])
 const fileList = ref<FileItem[]>([])
 const searchText = ref('')
 
@@ -85,7 +88,7 @@ const loadFiles = async () => {
 
     fileList.value = [...folders, ...papers]
   } catch (error: any) {
-    ElMessage.error('加载列表失败')
+    ElMessage.error(t('file.manager.actions.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -124,7 +127,7 @@ const handleRename = (row: FileItem) => {
 
 // 提交表单 (文件夹)
 const handleSubmit = async () => {
-  if (!form.name) return ElMessage.warning('请输入名称')
+  if (!form.name) return ElMessage.warning(t('file.manager.actions.inputName'))
   
   try {
     if (dialogType.value === 'add') {
@@ -138,7 +141,7 @@ const handleSubmit = async () => {
         name: form.name
       })
     }
-    ElMessage.success(dialogType.value === 'add' ? '创建成功' : '重命名成功')
+    ElMessage.success(dialogType.value === 'add' ? t('file.manager.actions.createSuccess') : t('file.manager.actions.renameSuccess'))
     dialogVisible.value = false
     loadFiles()
   } catch (error: any) {
@@ -181,7 +184,7 @@ const handlePaperSubmit = async () => {
       isPublic: editForm.isPublic,
       folderId: editForm.folderId
     })
-    ElMessage.success('修改成功')
+    ElMessage.success(t('user.profileInfo.saveSuccess'))
     editPaperVisible.value = false
     loadFiles()
   } catch (error) {
@@ -192,11 +195,11 @@ const handlePaperSubmit = async () => {
 // 删除
 const handleDelete = (row: FileItem) => {
   ElMessageBox.confirm(
-    '确定要删除该项目吗？',
-    '警告',
+    t('file.manager.actions.confirmDelete'),
+    t('common.warning'),
     {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+      confirmButtonText: t('file.manager.dialog.confirm'),
+      cancelButtonText: t('file.manager.dialog.cancel'),
       type: 'warning',
     }
   )
@@ -207,31 +210,31 @@ const handleDelete = (row: FileItem) => {
         } else {
             await deletePaper({ id: row.id })
         }
-        ElMessage.success('删除成功')
+        ElMessage.success(t('file.manager.actions.deleteSuccess'))
         loadFiles()
       } catch (e: any) {
         // 捕获 BusinessException, 如果是 FolderNotEmpty
         if (e.message?.includes("FolderNotEmpty") || e.code === 40101 || e.code === 50001) { 
            ElMessageBox.confirm(
-             '文件夹不为空，是否递归删除所有内容？此操作进入回收站。',
-             '确认递归删除',
+             t('file.manager.actions.folderNotEmpty'),
+             t('file.manager.actions.recursiveDelete'),
              {
-               confirmButtonText: '确定',
-               cancelButtonText: '取消',
+               confirmButtonText: t('file.manager.dialog.confirm'),
+               cancelButtonText: t('file.manager.dialog.cancel'),
                type: 'warning',
              }
            ).then(async () => {
                await deleteFolder({ id: row.id }, { params: { recursive: true } })
-               ElMessage.success('递归删除成功')
+               ElMessage.success(t('file.manager.actions.recursionSuccess'))
                loadFiles()
            }).catch(() => {
-               ElMessage.info('已取消删除')
+               ElMessage.info(t('file.manager.actions.cancelDelete'))
            })
         }
       }
     })
     .catch(() => {
-      ElMessage.info('已取消删除')
+      ElMessage.info(t('file.manager.actions.cancelDelete'))
     })
 }
 
@@ -246,20 +249,20 @@ onMounted(() => {
     <div class="mb-4 flex justify-between items-center w-full">
       <div class="flex items-center gap-4">
         <el-button type="primary" class="!rounded-md" @click="handleCreateFolder">
-          <div class="i-ep-folder-add mr-1" /> 新建文件夹
+          <div class="i-ep-folder-add mr-1" /> {{ t('file.manager.newFolder') }}
         </el-button>
         <el-button class="!rounded-md" @click="uploadVisible = true">
-          <div class="i-ep-upload mr-1" /> 上传论文
+          <div class="i-ep-upload mr-1" /> {{ t('file.manager.uploadPaper') }}
         </el-button>
         <el-button class="!rounded-md" @click="recycleVisible = true">
-          <div class="i-ep-delete mr-1" /> 回收站
+          <div class="i-ep-delete mr-1" /> {{ t('file.manager.recycleBin') }}
         </el-button>
       </div>
       <!-- 搜索框 -->
       <div class="flex items-center gap-2">
         <el-input 
           v-model="searchText"
-          placeholder="搜索文件" 
+          :placeholder="t('file.manager.searchPlaceholder')" 
           style="width: 200px"
           @keyup.enter="loadFiles"
           clearable
@@ -269,7 +272,7 @@ onMounted(() => {
             <div class="i-ep-search" />
           </template>
         </el-input>
-        <el-button class="!rounded-md" @click="loadFiles" plain title="刷新">
+        <el-button class="!rounded-md" @click="loadFiles" plain :title="t('file.manager.refresh')">
             <div class="i-ep-refresh" />
         </el-button>
       </div>
@@ -297,7 +300,7 @@ onMounted(() => {
       class="flex-1"
       @row-click="handleEnterFolder"
     >
-      <el-table-column label="名称" min-width="300">
+      <el-table-column :label="t('file.manager.columns.name')" min-width="300">
         <template #default="{ row }">
           <div class="flex items-center gap-2 cursor-pointer">
             <div 
@@ -307,17 +310,17 @@ onMounted(() => {
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="修改时间" width="200">
+      <el-table-column :label="t('file.manager.columns.updateTime')" width="200">
         <template #default="{ row }">
           {{ row.updateTime ? dayjs(row.updateTime).format('YYYY-MM-DD HH:mm:ss') : '-' }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="150" align="right">
+      <el-table-column :label="t('file.manager.columns.operation')" width="150" align="right">
         <template #default="{ row }">
           <div class="flex justify-end gap-2" @click.stop>
-            <el-button v-if="row.type === 'folder'" link type="primary" @click="handleRename(row)">重命名</el-button>
-            <el-button v-else link type="primary" @click="handleEditPaper(row)">编辑</el-button>
-            <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-button v-if="row.type === 'folder'" link type="primary" @click="handleRename(row)">{{ t('file.manager.actions.rename') }}</el-button>
+            <el-button v-else link type="primary" @click="handleEditPaper(row)">{{ t('file.manager.actions.edit') }}</el-button>
+            <el-button link type="danger" @click="handleDelete(row)">{{ t('file.manager.actions.delete') }}</el-button>
           </div>
         </template>
       </el-table-column>
@@ -326,15 +329,15 @@ onMounted(() => {
     <!-- 弹窗 -->
     <el-dialog
       v-model="dialogVisible"
-      :title="dialogType === 'add' ? '新建文件夹' : '重命名'"
+      :title="dialogType === 'add' ? t('file.manager.dialog.createTitle') : t('file.manager.dialog.renameTitle')"
       width="30%"
     >
-      <el-input v-model="form.name" placeholder="请输入文件夹名称" @keyup.enter="handleSubmit" />
+      <el-input v-model="form.name" :placeholder="t('file.manager.dialog.inputPlaceholder')" @keyup.enter="handleSubmit" />
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button @click="dialogVisible = false">{{ t('file.manager.dialog.cancel') }}</el-button>
           <el-button type="primary" @click="handleSubmit">
-            确定
+            {{ t('file.manager.dialog.confirm') }}
           </el-button>
         </span>
       </template>
@@ -343,37 +346,37 @@ onMounted(() => {
     <!-- 论文编辑弹窗 -->
     <el-dialog
       v-model="editPaperVisible"
-      title="编辑论文信息"
+      :title="t('file.manager.dialog.editPaperTitle')"
       width="50%"
     >
       <el-form :model="editForm" label-width="80px">
-        <el-form-item label="标题">
+        <el-form-item :label="t('file.manager.edit.title')">
           <el-input v-model="editForm.title" />
         </el-form-item>
-        <el-form-item label="作者">
-          <el-input v-model="editForm.authors" placeholder="多个作者用逗号分隔" />
+        <el-form-item :label="t('file.manager.edit.authors')">
+          <el-input v-model="editForm.authors" :placeholder="t('file.manager.edit.authorsPlaceholder')" />
         </el-form-item>
-        <el-form-item label="关键词">
-          <el-input v-model="editForm.keywords" placeholder="空格分隔" />
+        <el-form-item :label="t('file.manager.edit.keywords')">
+          <el-input v-model="editForm.keywords" :placeholder="t('file.manager.edit.keywordsPlaceholder')" />
         </el-form-item>
-        <el-form-item label="摘要">
+        <el-form-item :label="t('file.manager.edit.abstract')">
           <el-input v-model="editForm.abstractInfo" type="textarea" :rows="4" />
         </el-form-item>
-        <el-form-item label="公开">
+        <el-form-item :label="t('file.manager.edit.public')">
            <el-switch 
               v-model="editForm.isPublic" 
               :active-value="1" 
               :inactive-value="0"
-              active-text="公开可见"
-              inactive-text="仅自己可见"
+              :active-text="t('file.manager.edit.publicYes')"
+              :inactive-text="t('file.manager.edit.publicNo')"
             />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="editPaperVisible = false">取消</el-button>
+          <el-button @click="editPaperVisible = false">{{ t('file.manager.dialog.cancel') }}</el-button>
           <el-button type="primary" @click="handlePaperSubmit">
-            保存
+            {{ t('file.manager.dialog.save') }}
           </el-button>
         </span>
       </template>

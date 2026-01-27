@@ -4,6 +4,9 @@ import { ElMessage, type UploadFile, type UploadRequestOptions } from 'element-p
 import { uploadFile } from '~/api/fileController'
 import { addPaper } from '~/api/paperController'
 import * as pdfjsLib from 'pdfjs-dist'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 // Set worker source
 // 使用 CDN 或者本地静态资源配置 worker
@@ -63,8 +66,8 @@ watch(keywordsList, (val) => {
 }, { deep: true })
 
 const rules = {
-  title: [{ required: true, message: '请输入标题', trigger: 'blur' }],
-  cosUrl: [{ required: true, message: '请先上传文件', trigger: 'change' }],
+  title: [{ required: true, message: t('file.upload.messages.inputTitle'), trigger: 'blur' }],
+  cosUrl: [{ required: true, message: t('file.upload.messages.uploadFirst'), trigger: 'change' }],
 }
 
 function reset() {
@@ -184,17 +187,17 @@ const handleUpload = async (options: UploadRequestOptions) => {
         const nameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.')) || file.name
         formData.title = nameWithoutExt
         
-        ElMessage.success('文件上传及封面生成成功')
+        ElMessage.success(t('file.upload.messages.success'))
         onSuccess(res.data)
         // Auto advance to next step
         setTimeout(() => {
             activeStep.value = 1
         }, 500)
     } else {
-      throw new Error(res.message || '上传失败')
+      throw new Error(res.message || t('file.upload.messages.uploadFailed'))
     }
   } catch (error: any) {
-    ElMessage.error(error.message || '上传失败')
+    ElMessage.error(error.message || t('file.upload.messages.uploadFailed'))
     onError(error)
   } finally {
     loading.value = false
@@ -210,7 +213,7 @@ const handleSubmit = async () => {
         loading.value = true
         formData.folderId = props.folderId
         await addPaper(formData)
-        ElMessage.success('添加论文成功')
+        ElMessage.success(t('file.upload.messages.addSuccess'))
         dialogVisible.value = false
         emits('success')
       } catch (error: any) {
@@ -226,15 +229,15 @@ const handleSubmit = async () => {
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="上传论文"
+    :title="t('file.upload.title')"
     width="600px"
     destroy-on-close
     :close-on-click-modal="false"
   >
     <div class="px-4">
       <el-steps :active="activeStep" finish-status="success" class="mb-8" simple>
-        <el-step title="上传文件" icon="i-ep-upload" />
-        <el-step title="填写信息" icon="i-ep-edit" />
+        <el-step :title="t('file.upload.steps.upload')" icon="i-ep-upload" />
+        <el-step :title="t('file.upload.steps.info')" icon="i-ep-edit" />
       </el-steps>
 
       <!-- Step 1: Upload -->
@@ -249,11 +252,11 @@ const handleSubmit = async () => {
         >
           <div class="i-ep-upload-filled text-6xl text-gray-400 mb-4 mx-auto" />
           <div class="el-upload__text">
-            拖拽文件到此处，或 <em>点击上传</em>
+            {{ t('file.upload.drag') }} <em>{{ t('file.upload.click') }}</em>
           </div>
           <template #tip>
             <div class="el-upload__tip text-center">
-              支持 PDF, Word, PPT 等格式文档
+              {{ t('file.upload.tip') }}
             </div>
           </template>
         </el-upload>
@@ -262,7 +265,7 @@ const handleSubmit = async () => {
       <!-- Step 2: Form -->
       <div v-else class="py-2">
         <el-form ref="formRef" :model="formData" :rules="rules" label-width="80px">
-          <el-form-item label="文件">
+          <el-form-item :label="t('file.upload.form.file')">
             <div class="flex items-center gap-2 text-gray-500 w-full bg-gray-50 px-3 py-1 rounded border border-gray-200">
               <div class="i-ep-document" />
               <span class="truncate flex-1">{{ uploadedFileName }}</span>
@@ -273,15 +276,15 @@ const handleSubmit = async () => {
             </div>
           </el-form-item>
           
-          <el-form-item label="标题" prop="title">
-            <el-input v-model="formData.title" placeholder="请输入论文标题" />
+          <el-form-item :label="t('file.upload.form.title')" prop="title">
+            <el-input v-model="formData.title" :placeholder="t('file.upload.form.titlePlaceholder')" />
           </el-form-item>
           
-          <el-form-item label="作者" prop="authors">
-            <el-input v-model="formData.authors" placeholder="多个作者用逗号分隔" />
+          <el-form-item :label="t('file.upload.form.authors')" prop="authors">
+            <el-input v-model="formData.authors" :placeholder="t('file.upload.form.authorsPlaceholder')" />
           </el-form-item>
           
-          <el-form-item label="关键词" prop="keywords">
+          <el-form-item :label="t('file.upload.form.keywords')" prop="keywords">
             <div class="flex flex-wrap gap-2 w-full">
               <el-tag
                 v-for="tag in keywordsList"
@@ -297,7 +300,7 @@ const handleSubmit = async () => {
                 v-model="keywordInput"
                 class="!w-32"
                 size="small"
-                placeholder="输入后回车"
+                :placeholder="t('file.upload.form.keywordsPlaceholder')"
                 @keyup.enter="handleKeywordInputConfirm"
                 @blur="handleKeywordInputConfirm"
               />
@@ -306,22 +309,22 @@ const handleSubmit = async () => {
              <el-input v-model="formData.keywords" type="hidden" />
           </el-form-item>
           
-          <el-form-item label="摘要" prop="abstractInfo">
+          <el-form-item :label="t('file.upload.form.abstract')" prop="abstractInfo">
             <el-input 
               v-model="formData.abstractInfo" 
               type="textarea" 
               :rows="4" 
-              placeholder="请输入摘要" 
+              :placeholder="t('file.upload.form.abstractPlaceholder')" 
             />
           </el-form-item>
           
-          <el-form-item label="公开">
+          <el-form-item :label="t('file.upload.form.public')">
             <el-switch 
               v-model="formData.isPublic" 
               :active-value="1" 
               :inactive-value="0"
-              active-text="公开可见"
-              inactive-text="仅自己可见"
+              :active-text="t('file.upload.form.publicYes')"
+              :inactive-text="t('file.upload.form.publicNo')"
             />
           </el-form-item>
         </el-form>
@@ -330,15 +333,15 @@ const handleSubmit = async () => {
 
     <template #footer>
       <span class="dialog-footer">
-        <el-button v-if="activeStep === 1" @click="activeStep = 0">上一步</el-button>
-        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button v-if="activeStep === 1" @click="activeStep = 0">{{ t('file.upload.form.prev') }}</el-button>
+        <el-button @click="dialogVisible = false">{{ t('file.upload.form.cancel') }}</el-button>
         <el-button 
           v-if="activeStep === 1" 
           type="primary" 
           :loading="loading" 
           @click="handleSubmit"
         >
-          提交
+          {{ t('file.upload.form.submit') }}
         </el-button>
       </span>
     </template>

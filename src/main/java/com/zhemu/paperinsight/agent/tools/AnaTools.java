@@ -2,6 +2,7 @@ package com.zhemu.paperinsight.agent.tools;
 
 import cn.hutool.core.date.DateUtil;
 import io.agentscope.core.tool.Tool;
+import reactor.core.publisher.Mono;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -15,7 +16,7 @@ import org.springframework.stereotype.Component;
 public class AnaTools {
 
     @Tool(name = "get-now-time", description = "获取当前时间")
-    public String getNowTime() {
-        return DateUtil.now();
+    public Mono<String> getNowTime() {
+        return Mono.fromSupplier(DateUtil::now);
     }
 }

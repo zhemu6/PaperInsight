@@ -8,6 +8,7 @@ import java.util.Map;
 
 /**
  * 智能体提示词配置
+ * 
  * @author lushihao
  */
 @Data
@@ -20,9 +21,13 @@ public class AgentPromptConfig {
 
     @Data
     public static class AgentProperties {
+        private String provider;
         private String modelName;
-        private Integer maxIterations = 5;
+        private String apiKey;
+        private Boolean think;
+        private String baseUrl;
         private String sysPrompt;
+        private Integer maxIterations = 5;
         private Boolean enabled = true;
     }
 

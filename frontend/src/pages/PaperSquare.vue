@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
-import { User, ArrowRight } from '@element-plus/icons-vue'
+import { ArrowRight, User } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { listPublicPaperByPage } from '~/api/paperController'
+
+const { t } = useI18n()
 
 const router = useRouter()
 const loading = ref(false)
@@ -66,6 +69,11 @@ const formatTime = (time: string) => {
     return new Date(time).toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-')
 }
 
+// 跳转到论文详情页
+const goToDetail = (paperId: number) => {
+    router.push(`/paper/detail/${paperId}`)
+}
+
 onMounted(() => {
     fetchPapers()
 })
@@ -74,23 +82,23 @@ onMounted(() => {
 <template>
     <div class="h-full flex flex-col p-6">
         <div class="mb-4 bg-white dark:bg-gray-800 p-4 rounded shadow-sm border border-gray-100 dark:border-gray-800">
-             <div class="mb-2 font-bold text-sm text-gray-500 dark:text-gray-400">高级搜索</div>
-            <el-form :inline="true" :model="searchForm" class="demo-form-inline">
-                <el-form-item label="标题">
-                    <el-input v-model="searchForm.title" placeholder="论文标题" clearable />
+             <div class="mb-2 font-bold text-sm text-gray-500 dark:text-gray-400">{{ $t('paperSquare.advancedSearch') }}</div>
+            <el-form :inline="true" :model="searchForm" class="flex flex-wrap items-center gap-2">
+                <el-form-item :label="$t('paperSquare.titleLabel')" class="mb-0!">
+                    <el-input v-model="searchForm.title" :placeholder="$t('paperSquare.titlePlaceholder')" clearable style="width: 140px" />
                 </el-form-item>
-                <el-form-item label="作者">
-                     <el-input v-model="searchForm.authors" placeholder="作者姓名" clearable />
+                <el-form-item :label="$t('paperSquare.authors')" class="mb-0!">
+                     <el-input v-model="searchForm.authors" :placeholder="$t('paperSquare.authorsPlaceholder')" clearable style="width: 140px" />
                 </el-form-item>
-                <el-form-item label="关键词">
-                     <el-input v-model="searchForm.keywords" placeholder="关键词" clearable />
+                <el-form-item :label="$t('paperSquare.keywords')" class="mb-0!">
+                     <el-input v-model="searchForm.keywords" :placeholder="$t('paperSquare.keywordsPlaceholder')" clearable style="width: 140px" />
                 </el-form-item>
-                <el-form-item label="摘要">
-                     <el-input v-model="searchForm.abstractInfo" placeholder="摘要内容" clearable />
+                <el-form-item :label="$t('paperSquare.abstract')" class="mb-0!">
+                     <el-input v-model="searchForm.abstractInfo" :placeholder="$t('paperSquare.abstractPlaceholder')" clearable style="width: 160px" />
                 </el-form-item>
-                <el-form-item>
-                    <el-button type="primary" @click="handleSearch">搜索</el-button>
-                     <el-button @click="resetSearch">重置</el-button>
+                <el-form-item class="mb-0!">
+                    <el-button type="primary" @click="handleSearch">{{ $t('common.search') }}</el-button>
+                     <el-button @click="resetSearch">{{ $t('common.reset') }}</el-button>
                 </el-form-item>
             </el-form>
         </div>
@@ -106,13 +114,14 @@ onMounted(() => {
                         :body-style="{ padding: '0px' }" 
                         class="h-full hover:shadow-lg transition-shadow duration-300 cursor-pointer flex flex-col"
                         shadow="hover"
+                        @click="goToDetail(paper.id)"
                     >
                         <template #header>
                             <div class="flex flex-col gap-1.5">
                                 <span class="font-bold truncate text-base" :title="paper.title" style="color: var(--el-text-color-primary);">{{ paper.title }}</span>
                                 <div class="text-xs flex items-center" style="color: var(--el-text-color-secondary);">
                                     <el-icon class="mr-1"><User /></el-icon>
-                                    <span class="truncate" :title="paper.authors">{{ paper.authors || 'Unknown' }}</span>
+                                    <span class="truncate" :title="paper.authors">{{ paper.authors || $t('common.unknown') }}</span>
                                 </div>
                             </div>
                         </template>
@@ -147,15 +156,15 @@ onMounted(() => {
                             </div>
 
                             <p class="text-sm line-clamp-3 h-15" style="color: var(--el-text-color-regular);">
-                                {{ paper.abstractInfo || '暂无摘要' }}
+                                {{ paper.abstractInfo || $t('paperSquare.noAbstract') }}
                             </p>
                         </div>
 
                         <template #footer>
                             <div class="flex justify-between items-center text-xs" style="color: var(--el-text-color-secondary);">
                                 <span>{{ formatTime(paper.createTime) }}</span>
-                                <el-button type="primary" link size="small" class="!px-0">
-                                    查看详情 <el-icon class="ml-1"><ArrowRight /></el-icon>
+                                <el-button type="primary" link size="small" class="!px-0" @click.stop="goToDetail(paper.id)">
+                                    {{ $t('common.viewDetail') }} <el-icon class="ml-1"><ArrowRight /></el-icon>
                                 </el-button>
                             </div>
                         </template>
@@ -165,7 +174,7 @@ onMounted(() => {
 
             <div v-else-if="!loading" class="h-64 flex flex-col items-center justify-center text-gray-400">
                 <div class="i-ep-box text-6xl mb-4" />
-                <p>暂无相关论文</p>
+                <p>{{ $t('paperSquare.noPapers') }}</p>
             </div>
         </div>
 

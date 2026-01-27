@@ -1,7 +1,9 @@
 package com.zhemu.paperinsight.agent.config;
 
+import com.zhemu.paperinsight.agent.common.ElasticsearchStore;
 import com.zhemu.paperinsight.agent.core.ChatAgent;
 import com.zhemu.paperinsight.agent.tools.AnaTools;
+import io.agentscope.core.embedding.EmbeddingModel;
 import io.agentscope.core.model.Model;
 import io.agentscope.core.rag.Knowledge;
 import org.springframework.context.annotation.Bean;
@@ -19,7 +21,7 @@ import javax.sql.DataSource;
 public class ChatAgentConfig {
 
     @Bean
-    public ChatAgent chatAgent(Model model,
+    public ChatAgent chatAgent(@org.springframework.beans.factory.annotation.Qualifier("thinkingModel") Model model,
             AgentPromptConfig promptConfig,
             Knowledge knowledge,
             AnaTools anaTools,

@@ -1,38 +1,50 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { toggleDark } from '~/composables'
 import { useUserStore } from '~/stores/user'
+import { toggleLocale, getLocale } from '~/i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { UserFilled, SwitchButton, User } from '@element-plus/icons-vue'
 import logo from '~/assets/logo.svg'
 
 const router = useRouter()
 const userStore = useUserStore()
+const { t } = useI18n()
 
 const loginUser = computed(() => userStore.loginUser)
+const currentLocale = computed(() => getLocale())
 
 const handleCommand = (command: string) => {
   if (command === 'profile') {
     router.push('/user/profile')
-  } else if (command === 'logout') {
+  }
+  else if (command === 'logout') {
     handleLogout()
   }
 }
 
 const handleLogout = async () => {
-    try {
-        await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
-            type: 'warning'
-        })
-        await userStore.logout()
-        ElMessage.success('已退出登录')
-        router.push('/common/login')
-    } catch (e) {
-        // cancelled or failed
-    }
+  try {
+    await ElMessageBox.confirm(t('user.logoutConfirm') || '确定要退出登录吗？', t('common.warning'), {
+      confirmButtonText: t('common.confirm'),
+      cancelButtonText: t('common.cancel'),
+      type: 'warning',
+    })
+    await userStore.logout()
+    ElMessage.success(t('user.logoutSuccess'))
+    router.push('/common/login')
+  }
+  catch (e) {
+    // cancelled or failed
+  }
+}
+
+// 切换语言
+function handleToggleLocale() {
+  const newLocale = toggleLocale()
+  ElMessage.success(newLocale === 'zh' ? '已切换到中文' : 'Switched to English')
 }
 </script>
 
@@ -40,38 +52,47 @@ const handleLogout = async () => {
   <el-menu class="el-menu-demo flex items-center px-4" mode="horizontal" :ellipsis="false">
     <!-- Logo Area -->
     <div class="flex items-center gap-2 mr-auto cursor-pointer" @click="router.push('/')">
-        <img :src="logo" alt="PaperInsight Logo" class="h-8 w-8" />
-        <span class="font-bold text-lg hidden sm:block">PaperInsight</span>
+      <img :src="logo" alt="PaperInsight Logo" class="h-8 w-8">
+      <span class="font-bold text-lg hidden sm:block">PaperInsight</span>
     </div>
+
+    <!-- Language Toggle -->
+    <button
+      class="border-none bg-transparent cursor-pointer flex items-center justify-center p-2 mr-2 hover:bg-[var(--el-fill-color)] rounded-full transition-colors"
+      :title="$t('common.language')"
+      @click="handleToggleLocale"
+    >
+      <span class="text-sm font-medium">{{ currentLocale === 'zh' ? '中' : 'EN' }}</span>
+    </button>
 
     <!-- Theme Toggle -->
     <button
       class="border-none bg-transparent cursor-pointer flex items-center justify-center p-2 mr-4 hover:bg-[var(--el-fill-color)] rounded-full transition-colors"
+      :title="$t('common.language') === 'Language' ? 'Toggle Theme' : '切换主题'"
       @click="toggleDark()"
-      title="切换主题"
     >
       <i class="inline-flex text-xl i-ep-sunny dark:i-ep-moon" />
     </button>
 
     <!-- User Profile Dropdown -->
-    <el-dropdown @command="handleCommand" trigger="click">
+    <el-dropdown trigger="click" @command="handleCommand">
       <div class="flex items-center gap-2 cursor-pointer outline-none hover:opacity-80 transition-opacity">
-        <el-avatar 
-            :size="32" 
-            :src="loginUser.userAvatar" 
-            :icon="UserFilled"
-            class="border border-gray-200 dark:border-gray-700"
+        <el-avatar
+          :size="32"
+          :src="loginUser.userAvatar"
+          :icon="UserFilled"
+          class="border border-gray-200 dark:border-gray-700"
         />
-        <span class="max-w-[100px] truncate text-sm font-medium">{{ loginUser.userName || '用户' }}</span>
-        <div class="i-ep-arrow-down text-xs text-gray-400"></div>
+        <span class="max-w-[100px] truncate text-sm font-medium">{{ loginUser.userName || $t('user.notLoggedIn') }}</span>
+        <div class="i-ep-arrow-down text-xs text-gray-400" />
       </div>
       <template #dropdown>
         <el-dropdown-menu>
           <el-dropdown-item command="profile">
-             <el-icon><User /></el-icon>个人中心
+            <el-icon><User /></el-icon>{{ $t('nav.profile') }}
           </el-dropdown-item>
           <el-dropdown-item divided command="logout">
-             <el-icon><SwitchButton /></el-icon>退出登录
+            <el-icon><SwitchButton /></el-icon>{{ $t('nav.logout') }}
           </el-dropdown-item>
         </el-dropdown-menu>
       </template>

@@ -1,15 +1,23 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { Sunny, Moon } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { resetPassword } from '~/api/sysUserController'
-import bgImage from '~/assets/login_bg.png' // Shared background
+import { toggleLocale, getLocale } from '~/i18n'
+import bgImage from '~/assets/login_bg.png'
+import bgImageDark from '~/assets/login_bg_dark.png'
 import logo from '~/assets/logo.svg'
 import request from '~/request'
-import { useDark } from '@vueuse/core'
+import { useDark, useToggle } from '@vueuse/core'
 
+const { t } = useI18n()
 const isDark = useDark()
-isDark.value = false // 强制关闭暗黑模式
+const toggleDark = useToggle(isDark)
+
+// 根据主题动态切换背景图
+const currentBgImage = computed(() => isDark.value ? bgImageDark : bgImage)
 
 const router = useRouter()
 const form = reactive({
@@ -26,11 +34,11 @@ let timer: any = null
 
 const handleSendCode = async () => {
   if (!form.email) {
-    ElMessage.warning('请输入邮箱地址')
+    ElMessage.warning(t('user.enterEmail'))
     return
   }
   if (!/^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/.test(form.email)) {
-    ElMessage.warning('请输入有效的邮箱地址')
+    ElMessage.warning(t('user.invalidEmail'))
     return
   }
   
@@ -40,7 +48,7 @@ const handleSendCode = async () => {
       params: { email: form.email }
     })
     
-    ElMessage.success('验证码已发送')
+    ElMessage.success(t('user.codeSent'))
     countdown.value = 60
     timer = setInterval(() => {
       countdown.value--
@@ -49,7 +57,7 @@ const handleSendCode = async () => {
       }
     }, 1000)
   } catch (error: any) {
-    ElMessage.error(error.message || '发送验证码失败')
+    ElMessage.error(error.message || t('user.sendCodeFailed'))
   } finally {
     codeLoading.value = false
   }
@@ -57,11 +65,11 @@ const handleSendCode = async () => {
 
 const handleReset = async () => {
   if (!form.email || !form.code || !form.newPassword || !form.checkPassword) {
-    ElMessage.warning('请填写所有必填项')
+    ElMessage.warning(t('user.fillAllFields'))
     return
   }
   if (form.newPassword !== form.checkPassword) {
-    ElMessage.warning('两次输入的密码不一致')
+    ElMessage.warning(t('user.passwordMismatch'))
     return
   }
 
@@ -75,11 +83,10 @@ const handleReset = async () => {
     })
 
     if (res.code === 0) {
-      ElMessage.success('密码重置成功，请重新登录')
-      ElMessage.success('密码重置成功，请重新登录')
+      ElMessage.success(t('user.resetSuccess'))
       router.push('/common/login')
     } else {
-      ElMessage.error(res.message || '重置失败')
+      ElMessage.error(res.message || t('user.resetFailed'))
     }
   } catch (error: any) {
     console.error(error)
@@ -95,63 +102,79 @@ meta:
 </route>
 
 <template>
-  <div class="min-h-screen w-full flex bg-white">
+  <div class="min-h-screen w-full flex bg-white dark:bg-gray-900">
     <!-- 左侧：背景图 -->
-    <div class="hidden md:flex w-1/2 relative bg-cover bg-center" :style="{ backgroundImage: `url(${bgImage})` }">
+    <div class="hidden md:flex w-1/2 relative bg-cover bg-center" :style="{ backgroundImage: `url(${currentBgImage})` }">
       <!-- 遮罩层 -->
-      <div class="absolute inset-0 bg-blue-900/30 backdrop-blur-[2px]"></div>
-
+      <div class="absolute inset-0 bg-blue-900/30 dark:bg-gray-900/60 backdrop-blur-[2px]" />
       <!-- 左上角：Logo -->
-      <div class="absolute top-8 left-8 flex items-center gap-4 text-white z-10">
-        <div class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center border border-white/30">
-          <img :src="logo" alt="Logo" class="w-8 h-8" />
+      <div class="absolute top-8 left-8 flex items-center gap-5 text-white z-10">
+        <div class="w-16 h-16 bg-white/20 dark:bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30 dark:border-white/20">
+          <img :src="logo" alt="Logo" class="w-10 h-10" />
         </div>
-        <span class="text-2xl font-bold tracking-wide">PaperInsight</span>
+        <span class="text-3xl font-bold tracking-wide text-white">PaperInsight</span>
       </div>
 
       <!-- 中间内容 -->
-      <div class="absolute top-1/2 left-0 right-0 transform -translate-y-1/2 px-12 text-white z-10">
-        <h2 class="text-5xl font-serif font-bold leading-tight mb-6 tracking-wide">
-          挖掘学术论文的<br/>无限潜力
+      <div class="absolute top-1/2 left-0 right-0 transform -translate-y-1/2 px-12 z-10">
+        <h2 class="text-5xl font-serif font-bold leading-tight mb-6 tracking-wide text-white">
+          {{ $t('home.heroTitle1') }}<br />{{ $t('home.heroTitle2') }}
         </h2>
-        <div class="w-12 h-1 bg-white/50 mb-6"></div>
+        <div class="w-12 h-1 bg-white/50 dark:bg-white/30 mb-6" />
         <p class="text-xl text-white/90 font-light tracking-widest mb-10">
-          智能研读 · 深度洞察 · 高效科研
+          {{ $t('home.heroSlogan') }}
         </p>
 
         <!-- 特性标签 -->
         <div class="flex gap-4">
-          <div class="px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center gap-2 text-sm font-light">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-            智能工具
+          <div class="px-4 py-2 rounded-full bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/20 dark:border-white/10 flex items-center gap-2 text-sm font-light text-white">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            {{ $t('home.featureTools') }}
           </div>
-          <div class="px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center gap-2 text-sm font-light">
-            <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-            高效协作
+          <div class="px-4 py-2 rounded-full bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/20 dark:border-white/10 flex items-center gap-2 text-sm font-light text-white">
+            <span class="w-1.5 h-1.5 rounded-full bg-blue-400" />
+            {{ $t('home.featureCollab') }}
           </div>
         </div>
       </div>
 
       <!-- 底部引用 -->
-      <div class="absolute bottom-10 left-12 text-white/60 text-xs font-serif italic tracking-wider z-10">
-        " 创新始于洞察 "
+      <div class="absolute bottom-10 left-12 text-white/60 dark:text-white/40 text-sm font-serif italic tracking-wider z-10">
+        " {{ $t('home.registerQuote') }} "
       </div>
     </div>
 
     <!-- 右侧：重置密码表单 -->
     <div class="w-full md:w-1/2 flex items-center justify-center p-8 md:p-16 relative">
+      <!-- 主题/语言切换按钮 -->
+      <div class="absolute top-6 right-6 flex gap-2">
+        <button
+          @click="toggleDark()"
+          class="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+          :title="isDark ? 'Light Mode' : 'Dark Mode'"
+        >
+          <Moon v-if="!isDark" class="w-5 h-5 text-gray-600" />
+          <Sunny v-else class="w-5 h-5 text-yellow-500" />
+        </button>
+        <button
+          @click="toggleLocale()"
+          class="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-sm font-medium transition-colors"
+        >
+          {{ getLocale() === 'zh' ? 'EN' : '中' }}
+        </button>
+      </div>
       <div class="w-full max-w-[420px]">
         <!-- 标题 -->
         <div class="mb-10">
-          <h1 class="text-3xl font-serif text-gray-900 mb-3 tracking-wide">重置密码</h1>
-          <p class="text-gray-500 text-sm">请输入您的邮箱以重置密码</p>
+          <h1 class="text-3xl font-serif text-gray-900 dark:text-white mb-3 tracking-wide">{{ $t('user.resetPasswordTitle') }}</h1>
+          <p class="text-gray-500 text-sm">{{ $t('user.resetPasswordSubtitle') }}</p>
         </div>
 
         <!-- 表单 -->
         <div class="space-y-5">
           <el-input 
             v-model="form.email" 
-            placeholder="请输入邮箱地址" 
+            :placeholder="$t('user.emailPlaceholder')" 
             size="large"
             class="custom-input h-12"
           >
@@ -162,7 +185,7 @@ meta:
           <div class="flex gap-4">
             <el-input 
               v-model="form.code" 
-              placeholder="验证码" 
+              :placeholder="$t('user.codePlaceholder')" 
               size="large"
               class="custom-input flex-1 h-12"
             >
@@ -178,12 +201,12 @@ meta:
               :loading="codeLoading"
               @click="handleSendCode"
             >
-              {{ countdown > 0 ? `${countdown}s` : '发送验证码' }}
+              {{ countdown > 0 ? `${countdown}s` : $t('user.sendCode') }}
             </el-button>
           </div>
           <el-input 
             v-model="form.newPassword" 
-            placeholder="请输入新密码" 
+            :placeholder="$t('user.newPasswordPlaceholder')" 
             type="password" 
             size="large"
             show-password
@@ -195,7 +218,7 @@ meta:
           </el-input>
           <el-input 
             v-model="form.checkPassword" 
-            placeholder="请确认新密码" 
+            :placeholder="$t('user.confirmNewPasswordPlaceholder')" 
             type="password" 
             size="large"
             show-password
@@ -209,9 +232,8 @@ meta:
 
         <!-- 底部链接 -->
         <div class="flex justify-between items-center text-sm mt-6 mb-8">
-          <router-link to="/common/login" class="text-gray-500 hover:text-gray-900 flex items-center gap-1 transition-colors">
-            <div class="i-ep-arrow-left" />
-            返回登录
+          <router-link to="/common/login" class="font-medium text-blue-600 hover:underline transition-colors">
+            {{ $t('user.backToLogin') }}
           </router-link>
         </div>
 
@@ -223,12 +245,12 @@ meta:
           :loading="loading"
           @click="handleReset"
         >
-          确认重置
+          {{ $t('user.confirmReset') }}
         </el-button>
 
         <!-- 底部版权 -->
         <div class="text-center mt-10 text-xs text-gray-400 font-light tracking-wider">
-          © 2026 PaperInsight · 赋能科研新范式
+          © 2026 PaperInsight · {{ $t('home.copyright') }}
         </div>
       </div>
     </div>

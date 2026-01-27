@@ -26,11 +26,12 @@ public class ElasticsearchRAGConfig {
     // @Value("${spring.rabbitmq.password:changeme}")
     // private String esPassword;
 
-    @Value("${agentscope.dashscope.api-key}")
+    @Value("${agent.agents.dashscope.api-key}")
     private String dashscopeApiKey;
 
     private static final String ES_INDEX_NAME = "paper_insight_rag";
-    private static final int EMBEDDING_DIMENSIONS = 1024; // text-embedding-v3 输出维度
+    // text-embedding-v3 输出维度
+    private static final int EMBEDDING_DIMENSIONS = 1024;
 
     /**
      * ElasticsearchStore Bean

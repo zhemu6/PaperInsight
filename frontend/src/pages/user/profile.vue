@@ -2,8 +2,8 @@
   <div class="settings-page p-6 max-w-screen-xl mx-auto">
     <!-- 顶部标题 -->
     <div class="mb-8">
-      <h1 class="text-2xl font-bold text-slate-800 mb-2">设置</h1>
-      <p class="text-slate-500">管理您的账户和应用偏好</p>
+      <h1 class="text-2xl font-bold text-slate-800 mb-2">{{ t('user.profileInfo.editTitle') }}</h1>
+      <p class="text-slate-500">{{ t('user.profileInfo.editSubtitle') }}</p>
     </div>
 
     <div class="flex flex-col md:flex-row gap-6">
@@ -17,15 +17,15 @@
           >
             <el-menu-item index="profile">
               <el-icon><User /></el-icon>
-              <span>个人信息</span>
+              <span>{{ t('user.profileMenu.profile') }}</span>
             </el-menu-item>
             <el-menu-item index="security">
               <el-icon><Lock /></el-icon>
-              <span>安全设置</span>
+              <span>{{ t('user.profileMenu.security') }}</span>
             </el-menu-item>
             <el-menu-item index="preference">
               <el-icon><Setting /></el-icon>
-              <span>偏好设置</span>
+              <span>{{ t('user.profileMenu.preference') }}</span>
             </el-menu-item>
           </el-menu>
         </el-card>
@@ -36,20 +36,20 @@
         <el-card shadow="never" class="rounded-xl border-none shadow-sm min-h-[600px]">
           <!-- 个人信息面板 -->
           <div v-if="activeTab === 'profile'" class="p-4">
-            <h2 class="text-lg font-medium text-slate-800 mb-8">个人信息</h2>
+            <h2 class="text-lg font-medium text-slate-800 mb-8">{{ t('user.profileInfo.basicTitle') }}</h2>
 
             <el-form :model="formState" label-position="top" class="max-w-3xl">
               <div class="mb-8">
-                <h3 class="text-sm font-medium text-slate-500 mb-4">基本信息</h3>
-                <el-form-item label="用户名" prop="userName">
-                  <el-input v-model="formState.userName" size="large" placeholder="请输入用户名" />
+                <h3 class="text-sm font-medium text-slate-500 mb-4">{{ t('user.profileInfo.basicSubtitle') }}</h3>
+                <el-form-item :label="t('user.profileInfo.userNameLabel')" prop="userName">
+                  <el-input v-model="formState.userName" size="large" :placeholder="t('user.profileInfo.userNamePlaceholder')" />
                 </el-form-item>
 
-                <el-form-item label="个人简介" prop="userProfile">
+                <el-form-item :label="t('user.profileInfo.bioLabel')" prop="userProfile">
                    <el-input
                      v-model="formState.userProfile"
                      type="textarea"
-                     placeholder="介绍一下自己..."
+                     :placeholder="t('user.profileInfo.bioPlaceholder')"
                      :rows="4"
                      size="large"
                    />
@@ -57,7 +57,7 @@
               </div>
 
               <div class="mb-8">
-                <h3 class="text-sm font-medium text-slate-500 mb-4">头像</h3>
+                <h3 class="text-sm font-medium text-slate-500 mb-4">{{ t('user.profileInfo.avatarLabel') }}</h3>
                 <div class="flex items-center gap-6">
                    <el-avatar :size="80" :src="formState.userAvatar" class="flex-shrink-0 text-2xl bg-blue-100 text-blue-600">
                       {{ formState.userName?.charAt(0)?.toUpperCase() }}
@@ -69,16 +69,16 @@
                          :http-request="handleUpload"
                          :before-upload="beforeUpload"
                        >
-                         <el-button type="primary" link class="font-medium cursor-pointer">上传新头像</el-button>
+                         <el-button type="primary" link class="font-medium cursor-pointer">{{ t('user.profileInfo.uploadText') }}</el-button>
                        </el-upload>
-                       <p class="text-slate-400 text-xs mt-1">支持 JPG / PNG / WebP 格式，10MB以内</p>
+                       <p class="text-slate-400 text-xs mt-1">{{ t('user.profileInfo.uploadHint') }}</p>
                    </div>
                 </div>
               </div>
 
               <div class="flex justify-end gap-3 mt-12 pt-6 border-t border-slate-100">
-                 <el-button size="large" @click="handleReset">取消</el-button>
-                 <el-button type="primary" size="large" :loading="loading" @click="handleSave">保存更改</el-button>
+                 <el-button size="large" @click="handleReset">{{ t('user.profileInfo.cancel') }}</el-button>
+                 <el-button type="primary" size="large" :loading="loading" @click="handleSave">{{ t('user.profileInfo.save') }}</el-button>
               </div>
             </el-form>
           </div>
@@ -89,8 +89,8 @@
               <div v-if="securityView === 'list'">
                   <!-- Account Security -->
                   <div class="mb-10">
-                      <h3 class="text-base font-bold text-slate-800 mb-4">账户安全</h3>
-                      <p class="text-slate-500 text-sm mb-6">管理您的登录凭证和安全设置</p>
+                      <h3 class="text-base font-bold text-slate-800 mb-4">{{ t('user.security.title') }}</h3>
+                      <p class="text-slate-500 text-sm mb-6">{{ t('user.security.subtitle') }}</p>
 
                       <div class="space-y-4">
                           <!-- Email -->
@@ -100,11 +100,11 @@
                                       <el-icon><Message /></el-icon>
                                   </div>
                                   <div>
-                                      <div class="font-medium text-slate-700 text-base">邮箱地址</div>
-                                      <div class="text-slate-500 text-sm mt-1">{{ currentUser.email || '未绑定' }}</div>
+                                      <div class="font-medium text-slate-700 text-base">{{ t('user.security.email.label') }}</div>
+                                      <div class="text-slate-500 text-sm mt-1">{{ currentUser.email || t('user.security.email.notBound') }}</div>
                                   </div>
                               </div>
-                              <el-button type="primary" link class="!text-slate-400 hover:!text-blue-600" @click="securityView = 'email'">修改 <el-icon class="ml-1"><ArrowRight /></el-icon></el-button>
+                              <el-button type="primary" link class="!text-slate-400 hover:!text-blue-600" @click="securityView = 'email'">{{ t('user.security.email.change') }} <el-icon class="ml-1"><ArrowRight /></el-icon></el-button>
                           </div>
 
                           <!-- Password -->
@@ -114,11 +114,11 @@
                                       <el-icon><Lock /></el-icon>
                                   </div>
                                   <div>
-                                      <div class="font-medium text-slate-700 text-base">登录密码</div>
-                                      <div class="text-slate-500 text-sm mt-1">定期更换密码可以提高账户安全性</div>
+                                      <div class="font-medium text-slate-700 text-base">{{ t('user.security.password.label') }}</div>
+                                      <div class="text-slate-500 text-sm mt-1">{{ t('user.security.password.desc') }}</div>
                                   </div>
                               </div>
-                              <el-button type="primary" link class="!text-slate-400 hover:!text-blue-600" @click="securityView = 'password'">修改 <el-icon class="ml-1"><ArrowRight /></el-icon></el-button>
+                              <el-button type="primary" link class="!text-slate-400 hover:!text-blue-600" @click="securityView = 'password'">{{ t('user.security.password.change') }} <el-icon class="ml-1"><ArrowRight /></el-icon></el-button>
                           </div>
                       </div>
                   </div>
@@ -127,34 +127,34 @@
               <!-- Update Email View -->
               <div v-if="securityView === 'email'">
                   <div class="mb-8 cursor-pointer text-slate-500 hover:text-blue-600 flex items-center gap-2" @click="securityView = 'list'">
-                       <el-icon><ArrowLeft /></el-icon> 返回设置
+                       <el-icon><ArrowLeft /></el-icon> {{ t('user.security.back') }}
                   </div>
-                  <h2 class="text-xl font-bold text-slate-800 mb-2">修改邮箱</h2>
-                  <p class="text-slate-500 mb-8">更新您的邮箱地址</p>
+                  <h2 class="text-xl font-bold text-slate-800 mb-2">{{ t('user.security.email.title') }}</h2>
+                  <p class="text-slate-500 mb-8">{{ t('user.security.email.subtitle') }}</p>
 
-                  <el-alert title="注意: 修改邮箱后，您可以使用新邮箱或用户名为登录名登录。" type="info" show-icon class="mb-8" :closable="false" />
+                  <el-alert :title="t('user.security.email.warning')" type="info" show-icon class="mb-8" :closable="false" />
 
                    <el-form label-position="top" class="max-w-lg">
-                       <el-form-item label="当前邮箱">
+                       <el-form-item :label="t('user.security.email.current')">
                            <el-input size="large" :value="currentUser.email" disabled class="bg-gray-50" />
                        </el-form-item>
 
-                       <el-form-item label="新邮箱" required>
-                           <el-input v-model="emailForm.newEmail" size="large" placeholder="请输入新的邮箱地址" />
+                       <el-form-item :label="t('user.security.email.new')" required>
+                           <el-input v-model="emailForm.newEmail" size="large" :placeholder="t('user.security.email.newPlaceholder')" />
                        </el-form-item>
 
-                       <el-form-item label="验证码" required>
+                       <el-form-item :label="t('user.security.email.code')" required>
                            <div class="flex gap-4 w-full">
-                               <el-input v-model="emailForm.code" size="large" placeholder="请输入6位验证码" />
+                               <el-input v-model="emailForm.code" size="large" :placeholder="t('user.security.email.codePlaceholder')" />
                                <el-button size="large" :loading="codeLoading" :disabled="countdown > 0" @click="handleSendCode">
-                                   {{ countdown > 0 ? `${countdown}秒后重试` : '发送验证码' }}
+                                   {{ countdown > 0 ? `${countdown}${t('user.security.email.retry')}` : t('user.security.email.sendCode') }}
                                </el-button>
                            </div>
                        </el-form-item>
 
                        <div class="flex justify-end gap-3 mt-8">
-                           <el-button size="large" link @click="securityView = 'list'">重置</el-button>
-                           <el-button type="primary" size="large" :loading="emailLoading" @click="handleUpdateEmail">确认修改</el-button>
+                           <el-button size="large" link @click="securityView = 'list'">{{ t('user.security.email.reset') }}</el-button>
+                           <el-button type="primary" size="large" :loading="emailLoading" @click="handleUpdateEmail">{{ t('user.security.email.confirm') }}</el-button>
                        </div>
                    </el-form>
               </div>
@@ -162,29 +162,29 @@
               <!-- Update Password View -->
               <div v-if="securityView === 'password'">
                    <div class="mb-8 cursor-pointer text-slate-500 hover:text-blue-600 flex items-center gap-2" @click="securityView = 'list'">
-                       <el-icon><ArrowLeft /></el-icon> 返回设置
+                       <el-icon><ArrowLeft /></el-icon> {{ t('user.security.back') }}
                   </div>
-                  <h2 class="text-xl font-bold text-slate-800 mb-2">修改密码</h2>
-                  <p class="text-slate-500 mb-8">更新您的登录密码</p>
+                  <h2 class="text-xl font-bold text-slate-800 mb-2">{{ t('user.security.password.title') }}</h2>
+                  <p class="text-slate-500 mb-8">{{ t('user.security.password.subtitle') }}</p>
 
-                   <el-alert title="密码要求: 密码长度8-20位，必须包含字母、数字、特殊符号等三种字符" type="info" show-icon class="mb-8" :closable="false" />
+                   <el-alert :title="t('user.security.password.warning')" type="info" show-icon class="mb-8" :closable="false" />
 
                    <el-form label-position="top" class="max-w-lg">
-                       <el-form-item label="当前密码" required>
-                           <el-input v-model="passwordForm.oldPassword" type="password" show-password size="large" placeholder="请输入当前密码" />
+                       <el-form-item :label="t('user.security.password.current')" required>
+                           <el-input v-model="passwordForm.oldPassword" type="password" show-password size="large" :placeholder="t('user.security.password.currentPlaceholder')" />
                        </el-form-item>
 
-                       <el-form-item label="新密码" required>
-                           <el-input v-model="passwordForm.newPassword" type="password" show-password size="large" placeholder="请输入新密码" />
+                       <el-form-item :label="t('user.security.password.new')" required>
+                           <el-input v-model="passwordForm.newPassword" type="password" show-password size="large" :placeholder="t('user.security.password.newPlaceholder')" />
                        </el-form-item>
 
-                       <el-form-item label="确认新密码" required>
-                           <el-input v-model="passwordForm.checkPassword" type="password" show-password size="large" placeholder="请再次输入新密码" />
+                       <el-form-item :label="t('user.security.password.confirm')" required>
+                           <el-input v-model="passwordForm.checkPassword" type="password" show-password size="large" :placeholder="t('user.security.password.confirmPlaceholder')" />
                        </el-form-item>
 
                        <div class="flex justify-end gap-3 mt-8">
-                           <el-button size="large" link @click="securityView = 'list'">重置</el-button>
-                           <el-button type="primary" size="large" :loading="passwordLoading" @click="handleUpdatePassword">更新密码</el-button>
+                           <el-button size="large" link @click="securityView = 'list'">{{ t('user.security.password.reset') }}</el-button>
+                           <el-button type="primary" size="large" :loading="passwordLoading" @click="handleUpdatePassword">{{ t('user.security.password.update') }}</el-button>
                        </div>
                    </el-form>
               </div>
@@ -192,7 +192,7 @@
 
           <!-- 偏好设置面板 -->
           <div v-if="activeTab === 'preference'" class="p-4 flex items-center justify-center h-[400px] text-slate-400">
-             偏好设置功能开发中...
+             {{ t('user.preference.developing') }}
           </div>
         </el-card>
       </div>
@@ -213,7 +213,9 @@ import {
 import { ElMessage } from 'element-plus'
 import { getLoginUser, updateMyInfo, updateUserEmail, updateUserPassword, sendCode } from '~/api/sysUserController'
 import { uploadFile } from '~/api/fileController'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const activeTab = ref('profile')
 // securityView: 'list' | 'email' | 'password'
 const securityView = ref('list')
@@ -278,13 +280,13 @@ const handleReset = () => {
     formState.userName = currentUser.value?.userName || ''
     formState.userAvatar = currentUser.value?.userAvatar || ''
     formState.userProfile = currentUser.value?.userProfile || ''
-    ElMessage.info('已重置更改')
+    ElMessage.info(t('user.profileInfo.resetMessage'))
 }
 
 
 const handleSave = async () => {
   if (!formState.userName) {
-    ElMessage.error('用户名不能为空')
+    ElMessage.error(t('user.profileInfo.userNameRequired'))
     return
   }
 
@@ -298,10 +300,10 @@ const handleSave = async () => {
     }) as any
 
     if (res.code === 0) {
-      ElMessage.success('保存成功')
+      ElMessage.success(t('user.profileInfo.saveSuccess'))
       await fetchUserInfo()
     } else {
-      ElMessage.error(res.message || '保存失败')
+      ElMessage.error(res.message || t('user.profileInfo.saveFailed'))
     }
   } catch (error: unknown) {
     console.error(error)
@@ -313,12 +315,12 @@ const handleSave = async () => {
 // Logic for sending email code
 const handleSendCode = async () => {
   if (!emailForm.newEmail) {
-    ElMessage.error('请输入新邮箱地址')
+    ElMessage.error(t('user.security.email.inputNew'))
     return
   }
   // Simple regex
   if (!/^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/.test(emailForm.newEmail)) {
-    ElMessage.error('邮箱格式不正确')
+    ElMessage.error(t('user.security.email.formatError'))
     return
   }
 
@@ -326,7 +328,7 @@ const handleSendCode = async () => {
   try {
     const res = await sendCode({ email: emailForm.newEmail }) as any
     if (res.code === 0) {
-      ElMessage.success('验证码发送成功')
+      ElMessage.success(t('user.security.email.sendSuccess'))
       // Start countdown
       countdown.value = 60
       timer = setInterval(() => {
@@ -336,7 +338,7 @@ const handleSendCode = async () => {
         }
       }, 1000)
     } else {
-      ElMessage.error(res.message || '发送失败')
+      ElMessage.error(res.message || t('user.security.email.sendError'))
     }
   } catch (e) {
     // ElMessage.error('发送验证码失败')
@@ -347,7 +349,7 @@ const handleSendCode = async () => {
 
 const handleUpdateEmail = async () => {
   if (!emailForm.newEmail || !emailForm.code) {
-    ElMessage.error('请填写完整信息')
+    ElMessage.error(t('user.security.email.incomplete'))
     return
   }
   emailLoading.value = true
@@ -357,7 +359,7 @@ const handleUpdateEmail = async () => {
       code: emailForm.code
     }) as any
     if (res.code === 0) {
-      ElMessage.success('邮箱修改成功')
+      ElMessage.success(t('user.security.email.success'))
       securityView.value = 'list' // go back
       // Reset form
       emailForm.newEmail = ''
@@ -366,7 +368,7 @@ const handleUpdateEmail = async () => {
       countdown.value = 0
       fetchUserInfo() // refresh user info
     } else {
-      ElMessage.error(res.message || '修改失败')
+      ElMessage.error(res.message || t('user.security.email.updateError'))
     }
   } catch (e) {
     // ElMessage.error('修改失败')
@@ -377,16 +379,16 @@ const handleUpdateEmail = async () => {
 
 const handleUpdatePassword = async () => {
   if (!passwordForm.oldPassword || !passwordForm.newPassword || !passwordForm.checkPassword) {
-    ElMessage.error('请填写完整信息')
+    ElMessage.error(t('user.security.password.incomplete'))
     return
   }
   if (passwordForm.newPassword !== passwordForm.checkPassword) {
-    ElMessage.error('两次输入的新密码不一致')
+    ElMessage.error(t('user.security.password.mismatch'))
     return
   }
   // simple length check
   if (passwordForm.newPassword.length < 8) {
-    ElMessage.warning('建议密码长度不少于8位')
+    ElMessage.warning(t('user.security.password.lengthWarning'))
   }
 
   passwordLoading.value = true
@@ -397,11 +399,11 @@ const handleUpdatePassword = async () => {
       checkPassword: passwordForm.checkPassword
     }) as any
     if (res.code === 0) {
-      ElMessage.success('密码修改成功，请重新登录')
+      ElMessage.success(t('user.security.password.success'))
       // Redirect or logout logic
       window.location.reload()
     } else {
-      ElMessage.error(res.message || '修改失败')
+      ElMessage.error(res.message || t('user.security.password.updateError'))
     }
   } catch (e) {
     // ElMessage.error('修改失败')
@@ -415,11 +417,11 @@ const handleUpdatePassword = async () => {
 const beforeUpload = (file: File) => {
   const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/webp';
   if (!isJpgOrPng) {
-    ElMessage.error('只支持 JPG/PNG/WEBP 格式图片!');
+    ElMessage.error(t('user.profileInfo.uploadFormatError'));
   }
   const isLt2M = file.size / 1024 / 1024 < 10;
   if (!isLt2M) {
-    ElMessage.error('图片大小不能超过 10MB!');
+    ElMessage.error(t('user.profileInfo.uploadSizeError'));
   }
   return isJpgOrPng && isLt2M;
 }
@@ -436,15 +438,15 @@ const handleUpload = async (options: any) => {
       // Also update backend user record immediately or wait for save?
       // Typically avatar upload is independent or just gets the URL.
       // Here we just set the URL and user needs to click "Save Changes".
-      ElMessage.success('头像上传成功');
+      ElMessage.success(t('user.profileInfo.uploadSuccess'));
       onSuccess(res.data);
     } else {
-      ElMessage.error('上传失败: ' + (res.message || 'Unknown error'));
+      ElMessage.error(t('user.profileInfo.uploadError') + (res.message || 'Unknown error'));
       onError();
     }
   } catch (error: unknown) {
     console.error(error)
-    ElMessage.error('上传出错');
+    ElMessage.error(t('user.profileInfo.uploadErrorGeneric'));
     onError();
   }
 }

@@ -32,6 +32,7 @@
     "pinia-plugin-persistedstate": "^4.7.1",
     "vue": "^3.5.18",
     "vue-echarts": "^8.0.1",
+    "vue-i18n": "^11.2.8",
     "vue-router": "^4.5.1",
     "vue3-pdf-app": "^1.0.3"
   },

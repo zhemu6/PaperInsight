@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
+import { i18n } from '~/i18n'
 
 // 创建 Axios 实例
 const myAxios = axios.create({
@@ -10,11 +11,11 @@ const myAxios = axios.create({
 
 // 全局请求拦截器
 myAxios.interceptors.request.use(
-  function (config) {
+  (config) => {
     // Do something before request is sent
     return config
   },
-  function (error) {
+  (error) => {
     // Do something with request error
     return Promise.reject(error)
   },
@@ -22,7 +23,7 @@ myAxios.interceptors.request.use(
 
 // 全局响应拦截器
 myAxios.interceptors.response.use(
-  function (response) {
+  (response) => {
     const { data } = response
 
     // 未登录
@@ -31,7 +32,7 @@ myAxios.interceptors.response.use(
         !response.request.responseURL.includes('user/get/login') &&
         !window.location.pathname.includes('/common/login')
       ) {
-        ElMessage.warning('请先登录')
+        ElMessage.warning(i18n.global.t('error.unauthorized'))
         // 只保存路径和查询参数，避免完整 URL 过长
         const redirectPath = window.location.pathname + window.location.search
         window.location.href = `/common/login?redirect=${encodeURIComponent(redirectPath)}`
@@ -41,14 +42,14 @@ myAxios.interceptors.response.use(
 
     // 其他业务错误 (非 0)
     if (data.code !== 0) {
-      ElMessage.error(data.message || '系统错误')
+      ElMessage.error(data.message || i18n.global.t('error.systemError'))
       return Promise.reject(data)
     }
 
     // 成功
     return data
   },
-  function (error) {
+  (error) => {
     // Any status codes that falls outside the range of 2xx cause this function to trigger
     // Do something with response error
     return Promise.reject(error)

@@ -1,15 +1,23 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { Sunny, Moon } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { userRegister } from '~/api/sysUserController'
-import bgImage from '~/assets/login_bg.png' // Shared background
+import { toggleLocale, getLocale } from '~/i18n'
+import bgImage from '~/assets/login_bg.png'
+import bgImageDark from '~/assets/login_bg_dark.png'
 import logo from '~/assets/logo.svg'
 import request from '~/request'
-import { useDark } from '@vueuse/core'
+import { useDark, useToggle } from '@vueuse/core'
 
+const { t } = useI18n()
 const isDark = useDark()
-isDark.value = false // 强制关闭暗黑模式
+const toggleDark = useToggle(isDark)
+
+// 根据主题动态切换背景图
+const currentBgImage = computed(() => isDark.value ? bgImageDark : bgImage)
 
 const router = useRouter()
 const form = reactive({
@@ -27,11 +35,11 @@ let timer: any = null
 
 const handleSendCode = async () => {
   if (!form.email) {
-    ElMessage.warning('请输入邮箱地址')
+    ElMessage.warning(t('user.enterEmail'))
     return
   }
   if (!/^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/.test(form.email)) {
-    ElMessage.warning('请输入有效的邮箱地址')
+    ElMessage.warning(t('user.invalidEmail'))
     return
   }
   
@@ -41,7 +49,7 @@ const handleSendCode = async () => {
       params: { email: form.email }
     })
     
-    ElMessage.success('验证码已发送')
+    ElMessage.success(t('user.codeSent'))
     countdown.value = 60
     timer = setInterval(() => {
       countdown.value--
@@ -50,7 +58,7 @@ const handleSendCode = async () => {
       }
     }, 1000)
   } catch (error: any) {
-    ElMessage.error(error.message || '发送验证码失败')
+    ElMessage.error(error.message || t('user.sendCodeFailed'))
   } finally {
     codeLoading.value = false
   }
@@ -58,11 +66,11 @@ const handleSendCode = async () => {
 
 const handleRegister = async () => {
   if (!form.userAccount || !form.userPassword || !form.email || !form.code) {
-    ElMessage.warning('请填写所有必填项')
+    ElMessage.warning(t('user.fillAllFields'))
     return
   }
   if (form.userPassword !== form.checkPassword) {
-    ElMessage.warning('两次输入的密码不一致')
+    ElMessage.warning(t('user.passwordMismatch'))
     return
   }
 
@@ -77,10 +85,10 @@ const handleRegister = async () => {
     }) as any
 
     if (res.code === 0 && res.data) {
-      ElMessage.success('注册成功')
+      ElMessage.success(t('user.registerSuccess'))
       router.push('/common/login')
     } else {
-      ElMessage.error(res.message || '注册失败')
+      ElMessage.error(res.message || t('user.registerFailed'))
     }
   } catch (error: any) {
     console.error(error)
@@ -96,63 +104,83 @@ meta:
 </route>
 
 <template>
-  <div class="min-h-screen w-full flex bg-white">
+  <div class="min-h-screen w-full flex bg-white dark:bg-gray-900">
     <!-- 左侧：背景图 -->
-    <div class="hidden md:flex w-1/2 relative bg-cover bg-center" :style="{ backgroundImage: `url(${bgImage})` }">
+    <div class="hidden md:flex w-1/2 relative bg-cover bg-center" :style="{ backgroundImage: `url(${currentBgImage})` }">
+
       <!-- 遮罩层 -->
-      <div class="absolute inset-0 bg-blue-900/30 backdrop-blur-[2px]"></div>
+      <div class="absolute inset-0 bg-blue-900/30 dark:bg-gray-900/60 backdrop-blur-[2px]" />
 
       <!-- 左上角：Logo -->
-      <div class="absolute top-8 left-8 flex items-center gap-4 text-white z-10">
-        <div class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center border border-white/30">
-          <img :src="logo" alt="Logo" class="w-8 h-8" />
+      <div class="absolute top-8 left-8 flex items-center gap-5 text-white z-10">
+        <div class="w-16 h-16 bg-white/20 dark:bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30 dark:border-white/20">
+          <img :src="logo" alt="Logo" class="w-10 h-10" />
         </div>
-        <span class="text-2xl font-bold tracking-wide">PaperInsight</span>
+        <span class="text-3xl font-bold tracking-wide text-white">PaperInsight</span>
       </div>
 
       <!-- 中间内容 -->
-      <div class="absolute top-1/2 left-0 right-0 transform -translate-y-1/2 px-12 text-white z-10">
-        <h2 class="text-5xl font-serif font-bold leading-tight mb-6 tracking-wide">
-          加入未来的<br/>科研社区
+      <div class="absolute top-1/2 left-0 right-0 transform -translate-y-1/2 px-12 z-10">
+        <h2 class="text-5xl font-serif font-bold leading-tight mb-6 tracking-wide text-white">
+          {{ $t('home.joinCommunity1') }}<br />{{ $t('home.joinCommunity2') }}
         </h2>
-        <div class="w-12 h-1 bg-white/50 mb-6"></div>
+        <div class="w-12 h-1 bg-white/50 dark:bg-white/30 mb-6" />
         <p class="text-xl text-white/90 font-light tracking-widest mb-10">
-          创建账户 · 开启您的智慧之旅
+          {{ $t('home.joinSlogan') }}
         </p>
 
         <!-- 特性标签 -->
         <div class="flex gap-4">
-          <div class="px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center gap-2 text-sm font-light">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-            智能工具
+          <div class="px-4 py-2 rounded-full bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/20 dark:border-white/10 flex items-center gap-2 text-sm font-light text-white">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            {{ $t('home.featureTools') }}
           </div>
-          <div class="px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center gap-2 text-sm font-light">
-            <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-            高效协作
+          <div class="px-4 py-2 rounded-full bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/20 dark:border-white/10 flex items-center gap-2 text-sm font-light text-white">
+            <span class="w-1.5 h-1.5 rounded-full bg-blue-400" />
+            {{ $t('home.featureCollab') }}
           </div>
         </div>
       </div>
 
       <!-- 底部引用 -->
-      <div class="absolute bottom-10 left-12 text-white/60 text-xs font-serif italic tracking-wider z-10">
-        " 创新始于洞察 "
+      <div class="absolute bottom-10 left-12 text-white/60 dark:text-white/40 text-sm font-serif italic tracking-wider z-10">
+        " {{ $t('home.registerQuote') }} "
       </div>
     </div>
 
     <!-- 右侧：注册表单 -->
-    <div class="w-full md:w-1/2 flex items-center justify-center p-8 md:p-16 relative">
+    <div class="w-full md:w-1/2 flex items-center justify-center p-8 md:p-16 relative bg-white dark:bg-gray-900">
+      <!-- 右上角：主题和语言切换 -->
+      <div class="absolute top-6 right-6 flex items-center gap-3">
+        <button 
+          class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+          :title="isDark ? 'Light Mode' : 'Dark Mode'"
+          @click="toggleDark()"
+        >
+          <el-icon :size="18" class="text-gray-600 dark:text-gray-300">
+            <Moon v-if="!isDark" />
+            <Sunny v-else />
+          </el-icon>
+        </button>
+        <button 
+          class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium text-gray-600 dark:text-gray-300"
+          @click="toggleLocale()"
+        >
+          {{ getLocale() === 'zh' ? 'EN' : '中' }}
+        </button>
+      </div>
       <div class="w-full max-w-[420px]">
         <!-- 标题 -->
         <div class="mb-10">
-          <h1 class="text-3xl font-serif text-gray-900 mb-3 tracking-wide">创建账户</h1>
-          <p class="text-gray-500 text-sm">即刻加入 PaperInsight</p>
+          <h1 class="text-3xl font-serif text-gray-900 dark:text-white mb-3 tracking-wide">{{ $t('user.createAccount') }}</h1>
+          <p class="text-gray-500 text-sm">{{ $t('user.registerSubtitle') }}</p>
         </div>
 
         <!-- 表单 -->
         <div class="space-y-5">
           <el-input 
             v-model="form.userAccount" 
-            placeholder="请输入账号" 
+            :placeholder="$t('user.accountPlaceholder')" 
             size="large"
             class="custom-input h-12"
           >
@@ -162,7 +190,7 @@ meta:
           </el-input>
           <el-input 
             v-model="form.email" 
-            placeholder="请输入邮箱地址" 
+            :placeholder="$t('user.emailPlaceholder')" 
             size="large"
             class="custom-input h-12"
           >
@@ -173,7 +201,7 @@ meta:
           <div class="flex gap-4">
             <el-input 
               v-model="form.code" 
-              placeholder="验证码" 
+              :placeholder="$t('user.codePlaceholder')" 
               size="large"
               class="custom-input flex-1 h-12"
             >
@@ -189,12 +217,12 @@ meta:
               :loading="codeLoading"
               @click="handleSendCode"
             >
-              {{ countdown > 0 ? `${countdown}s` : '发送验证码' }}
+              {{ countdown > 0 ? `${countdown}s` : $t('user.sendCode') }}
             </el-button>
           </div>
           <el-input 
             v-model="form.userPassword" 
-            placeholder="请输入密码" 
+            :placeholder="$t('user.passwordPlaceholder')" 
             type="password" 
             size="large"
             show-password
@@ -206,7 +234,7 @@ meta:
           </el-input>
           <el-input 
             v-model="form.checkPassword" 
-            placeholder="请确认密码" 
+            :placeholder="$t('user.confirmPasswordPlaceholder')" 
             type="password" 
             size="large"
             show-password
@@ -220,11 +248,11 @@ meta:
 
         <!-- 底部链接 -->
         <div class="flex justify-between items-center text-sm mt-6 mb-8">
-          <div class="text-gray-400"></div> <!-- 占位保持布局一致 -->
+          <div class="text-gray-400" /> <!-- 占位保持布局一致 -->
           <div class="flex items-center gap-2">
-            <span class="text-gray-500">已有账号？</span>
+            <span class="text-gray-500">{{ $t('user.hasAccount') }}</span>
             <router-link to="/common/login" class="font-medium text-blue-600 hover:underline transition-colors">
-              立即登录
+              {{ $t('user.goLogin') }}
             </router-link>
           </div>
         </div>
@@ -237,12 +265,12 @@ meta:
           :loading="loading"
           @click="handleRegister"
         >
-          注 册
+          {{ $t('user.registerButton') }}
         </el-button>
 
         <!-- 底部版权 -->
         <div class="text-center mt-10 text-xs text-gray-400 font-light tracking-wider">
-          © 2026 PaperInsight · 赋能科研新范式
+          © 2026 PaperInsight · {{ $t('home.copyright') }}
         </div>
       </div>
     </div>

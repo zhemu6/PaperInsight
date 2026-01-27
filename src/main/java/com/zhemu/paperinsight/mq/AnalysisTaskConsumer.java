@@ -82,24 +82,10 @@ public class AnalysisTaskConsumer {
                         // 使用 TextReader 切分文本
                         TextReader textReader = new TextReader(512, SplitStrategy.PARAGRAPH, 50);
                         List<Document> docs = textReader.read(ReaderInput.fromString(extractedText)).block();
-
-                        if (docs != null && !docs.isEmpty()) {
-                            // 转换为带元数据的 PaperDocument
-                            List<Document> paperDocs = docs.stream()
-                                    .map(doc -> (Document) new ElasticsearchStore.PaperDocument(
-                                            doc.getMetadata(),
-                                            null, // embedding 由 Knowledge 自动生成
-                                            task.getPaperId(),
-                                            task.getUserId()))
-                                    .collect(Collectors.toList());
-
-                            // 执行入库
-                            knowledge.addDocuments(paperDocs).block();
-                            log.info("RAG indexing completed for paperId: {}, docs count: {}", task.getPaperId(),
-                                    paperDocs.size());
-                        } else {
-                            log.warn("No documents extracted from PDF for paperId: {}", task.getPaperId());
-                        }
+                        // 执行入库
+                        knowledge.addDocuments(docs).block();
+                        log.info("RAG indexing completed for paperId: {}, docs count: {}", task.getPaperId(),
+                                docs.size());
                     } else {
                         log.warn("Failed to extract text from PDF for paperId: {}", task.getPaperId());
                     }

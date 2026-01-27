@@ -6,7 +6,7 @@ export const useUserStore = defineStore(
   'user',
   () => {
     const loginUser = ref<API.SysUserVO>({
-      userName: '未登录',
+      userName: '',
     })
 
     async function fetchLoginUser() {
@@ -26,7 +26,7 @@ export const useUserStore = defineStore(
 
     async function logout() {
       await userLogout()
-      loginUser.value = { userName: '未登录' }
+      loginUser.value = { userName: '' }
     }
 
     return {

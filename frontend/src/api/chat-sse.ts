@@ -19,39 +19,62 @@ export interface ChatMessage {
  * @param userId 用户ID
  * @param onMessage 收到消息回调 (增量文本)
  * @param onDone 完成回调
- * @param onError 错误回调
+ * @param _onError 错误回调
  * @returns EventSource 实例 (用于关闭连接)
  */
 export function startChatStream(
   chatId: string,
   userQuery: string,
   userId: string,
-  onMessage: (text: string) => void,
+  onMessage: (data: any, type: string) => void,
   onDone: () => void,
-  onError: (error: any) => void,
+  _onError: (error: any) => void,
 ): EventSource {
   // 更新为新的 API 路径: /assistant/chat
   // 参数: chatId, userQuery, userId
   const url = `/api/assistant/chat?chatId=${chatId}&userQuery=${encodeURIComponent(userQuery)}&userId=${userId}`
   const eventSource = new EventSource(url)
 
+  // 监听默认的消息事件 (Text)
   eventSource.onmessage = (event) => {
-    // 官方 SupervisorAgentController 直接发送内容，没有 [DONE] 标记，而是通过流关闭来结束
-    // 但为了保险，我们还是检查一下数据
     if (event.data) {
-       onMessage(event.data)
+      onMessage(event.data, 'text')
     }
   }
 
+  // 监听思考过程事件 (Thinking)
+  eventSource.addEventListener('thinking', (event) => {
+    if (event.data) {
+      onMessage(event.data, 'thinking')
+    }
+  })
+
+  // 监听工具调用事件
+  eventSource.addEventListener('tool_use', (event) => {
+    if (event.data) {
+      onMessage(event.data, 'tool_use')
+    }
+  })
+
+  // 监听工具结果事件
+  eventSource.addEventListener('tool_result', (event) => {
+    if (event.data) {
+      onMessage(event.data, 'tool_result')
+    }
+  })
+
+  // 仍然保留 done 事件监听
   eventSource.addEventListener('done', () => {
     eventSource.close()
     onDone()
   })
 
-  eventSource.onerror = (error) => {
-    console.error('SSE Error:', error)
+  // 处理连接关闭/错误
+  // 由于后端直接关闭流会导致浏览器触发 error，这里我们将其视为一次会话结束
+  eventSource.onerror = (_error) => {
+    // console.error('SSE Stream closed or error')
     eventSource.close()
-    onError(error)
+    onDone()
   }
 
   return eventSource
@@ -74,4 +97,12 @@ export async function getChatHistory(chatId: string) {
  */
 export function clearSession(paperId: number | string) {
   return apiClearSession({ paperId: Number(paperId) })
+}
+/**
+ * 停止生成
+ */
+export function stopChat(chatId: string) {
+  return fetch(`/api/assistant/stop?chatId=${chatId}`, {
+    method: 'POST'
+  })
 }

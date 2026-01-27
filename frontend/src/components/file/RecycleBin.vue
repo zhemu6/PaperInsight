@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import { listRecycleBin, restore, physicalDelete } from '~/api/recycleBinController'
 import { listFolderByPage } from '~/api/folderController'
 
@@ -9,6 +10,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits(['update:visible', 'close'])
+
+const { t } = useI18n()
 
 const loading = ref(false)
 const list = ref<any[]>([])
@@ -39,11 +42,6 @@ const handleClose = () => {
   emit('update:visible', false)
   emit('close')
 }
-
-// 还原
-import { listFolderByPage } from '~/api/folderController'
-
-// ...
 
 const restoreDialogVisible = ref(false)
 const restoreLoading = ref(false)
@@ -81,7 +79,7 @@ const buildTree = (folders: any[]) => {
 
   return [
       { 
-          label: '根目录', 
+          label: t('file.manager.root'), 
           value: 0, 
           children: tree 
       }
@@ -96,12 +94,12 @@ const handleRestore = async (row: any) => {
   
   // 加载文件夹列表供选择
   try {
-     const res = await listFolderByPage({ pageSize: 1000 })
-     if (res.data && res.data.records) {
-       folderTree.value = buildTree(res.data.records)
-     }
+    const res = await listFolderByPage({ pageSize: 1000 })
+    if (res.data && res.data.records) {
+      folderTree.value = buildTree(res.data.records)
+    }
   } catch (e) {
-      // ignore
+    // ignore
   }
 }
 
@@ -114,7 +112,7 @@ const confirmRestore = async () => {
             paperId: currentRestoreRow.value.id, 
             folderId: targetFolderId.value 
         })
-        ElMessage.success('还原成功')
+        ElMessage.success(t('file.recycleBin.actions.restoreSuccess'))
         restoreDialogVisible.value = false
         loadData()
         emit('close') 
@@ -128,17 +126,17 @@ const confirmRestore = async () => {
 // 彻底删除
 const handleDelete = (row: any) => {
   ElMessageBox.confirm(
-    '此操作将永久删除该文件，不可恢复！确定继续吗？',
-    '警告',
+    t('file.recycleBin.actions.confirmDeleteForever'),
+    t('common.warning'),
     {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+      confirmButtonText: t('common.confirm'),
+      cancelButtonText: t('common.cancel'),
       type: 'warning',
     }
   ).then(async () => {
     try {
       await physicalDelete({ paperId: row.id })
-      ElMessage.success('彻底删除成功')
+      ElMessage.success(t('file.recycleBin.actions.deleteForeverSuccess'))
       loadData()
     } catch (error) {
         //
@@ -164,20 +162,17 @@ const formatDate = (dateStr?: string) => {
     hour12: false
   }).replace(/\//g, '-')
 }
-
-// ... existing code ...
-
 </script>
 
 <template>
   <el-dialog
     :model-value="visible"
-    title="回收站"
+    :title="t('file.recycleBin.title')"
     width="60%"
     @close="handleClose"
   >
     <el-table v-loading="loading" :data="list" height="400">
-      <el-table-column label="名称" min-width="200">
+      <el-table-column :label="t('file.recycleBin.columns.name')" min-width="200">
         <template #default="{ row }">
             <div class="flex items-center gap-2">
                 <div class="i-ep-document text-blue-400 text-xl" />
@@ -185,15 +180,15 @@ const formatDate = (dateStr?: string) => {
             </div>
         </template>
       </el-table-column>
-      <el-table-column label="删除时间" width="200">
+      <el-table-column :label="t('file.recycleBin.columns.deleteTime')" width="200">
         <template #default="{ row }">
           {{ formatDate(row.updateTime) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="150" align="right">
+      <el-table-column :label="t('file.recycleBin.columns.operation')" width="200" align="right">
         <template #default="{ row }">
-          <el-button link type="primary" @click="handleRestore(row)">还原</el-button>
-          <el-button link type="danger" @click="handleDelete(row)">彻底删除</el-button>
+          <el-button link type="primary" @click="handleRestore(row)">{{ t('file.recycleBin.actions.restore') }}</el-button>
+          <el-button link type="danger" @click="handleDelete(row)">{{ t('file.recycleBin.actions.deleteForever') }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -201,27 +196,27 @@ const formatDate = (dateStr?: string) => {
     <!-- 还原目标文件夹选择弹窗 -->
     <el-dialog
       v-model="restoreDialogVisible"
-      title="选择还原位置"
+      :title="t('file.recycleBin.dialog.title')"
       width="30%"
       append-to-body
     >
       <div class="mb-4">
-        <label class="block mb-2 text-sm text-gray-500">目标文件夹：</label>
+        <label class="block mb-2 text-sm text-gray-500">{{ t('file.recycleBin.dialog.targetFolder') }}</label>
         <el-tree-select
           v-model="targetFolderId"
           :data="folderTree"
           check-strictly
           :render-after-expand="false"
-          placeholder="请选择目标文件夹"
+          :placeholder="t('file.recycleBin.dialog.placeholder')"
           class="w-full"
           filterable
         />
       </div>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="restoreDialogVisible = false">取消</el-button>
+          <el-button @click="restoreDialogVisible = false">{{ t('common.cancel') }}</el-button>
           <el-button type="primary" :loading="restoreLoading" @click="confirmRestore">
-            确定还原
+            {{ t('file.recycleBin.dialog.confirm') }}
           </el-button>
         </span>
       </template>

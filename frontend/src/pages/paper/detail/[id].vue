@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { ElMessage } from 'element-plus'
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { getPaperDetail } from '~/api/paperController'
 import MarkdownViewer from '~/components/InsightPanel/MarkdownViewer.vue'
 import ScoreRadarChart from '~/components/InsightPanel/RadarChart.vue'
 import PdfViewer from '~/components/PdfViewer/index.vue'
 
+const { t } = useI18n()
 const route = useRoute()
 const paperId = route.params.id as string
 
@@ -22,12 +24,12 @@ async function fetchData() {
       detail.value = res.data || null
     }
     else {
-      ElMessage.error(res.message || '获取论文详情失败')
+      ElMessage.error(res.message || t('paperDetail.fetchFailed'))
     }
   }
   catch (error) {
     console.error(error)
-    ElMessage.error('网络请求异常')
+    ElMessage.error(t('paperDetail.networkError'))
   }
   finally {
     loading.value = false
@@ -52,7 +54,7 @@ onMounted(() => {
         <PdfViewer :url="detail.paperInfo.cosUrl" />
       </div>
       <div v-else class="h-full flex items-center justify-center text-gray-400">
-        暂无 PDF 文件
+        {{ t('paperDetail.noPdf') }}
       </div>
     </div>
 
@@ -80,14 +82,14 @@ onMounted(() => {
 
         <!-- Tabs -->
         <el-tabs v-model="activeTab" class="px-4">
-          <el-tab-pane label="AI 解读" name="insight">
+          <el-tab-pane :label="t('paperDetail.tabs.insight')" name="insight">
             <div class="py-4 space-y-6">
               <!-- Summary -->
               <section>
                 <div class="mb-3 flex items-center gap-2">
                   <div class="i-ri-article-line text-lg text-blue-500" />
                   <h3 class="text-gray-800 font-bold dark:text-gray-200">
-                    论文摘要
+                    {{ t('paperDetail.sections.summary') }}
                   </h3>
                 </div>
                 <div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-900">
@@ -100,7 +102,7 @@ onMounted(() => {
                 <div class="mb-3 flex items-center gap-2">
                   <div class="i-ri-lightbulb-flash-line text-lg text-yellow-500" />
                   <h3 class="text-gray-800 font-bold dark:text-gray-200">
-                    创新点
+                    {{ t('paperDetail.sections.innovation') }}
                   </h3>
                 </div>
                 <div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-900">
@@ -113,7 +115,7 @@ onMounted(() => {
                 <div class="mb-3 flex items-center gap-2">
                   <div class="i-ri-hammer-line text-lg text-purple-500" />
                   <h3 class="text-gray-800 font-bold dark:text-gray-200">
-                    方法论
+                    {{ t('paperDetail.sections.methods') }}
                   </h3>
                 </div>
                 <div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-900">
@@ -122,7 +124,7 @@ onMounted(() => {
               </section>
             </div>
           </el-tab-pane>
-          <el-tab-pane label="Chat (Beta)" name="chat" class="h-full">
+          <el-tab-pane :label="t('paperDetail.tabs.chat')" name="chat" class="h-full">
             <div class="h-full">
                <ChatPanel :paper-id="paperId" />
             </div>

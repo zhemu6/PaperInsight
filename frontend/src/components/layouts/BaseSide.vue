@@ -1,11 +1,9 @@
 <script lang="ts" setup>
 import {
   Document,
-  Menu as IconMenu,
   Location,
   Setting,
 } from '@element-plus/icons-vue'
-
 </script>
 
 <template>
@@ -16,17 +14,17 @@ import {
   >
     <el-menu-item index="/PaperSquare">
       <el-icon><Location /></el-icon>
-      <template #title>论文广场</template>
+      <template #title>{{ $t('nav.paperSquare') }}</template>
     </el-menu-item>
 
     <el-menu-item index="/file">
       <el-icon><Document /></el-icon>
-      <template #title>我的论文</template>
+      <template #title>{{ $t('nav.myPapers') }}</template>
     </el-menu-item>
 
     <el-menu-item index="/user/profile">
       <el-icon><Setting /></el-icon>
-      <template #title>个人中心</template>
+      <template #title>{{ $t('nav.profile') }}</template>
     </el-menu-item>
   </el-menu>
 </template>

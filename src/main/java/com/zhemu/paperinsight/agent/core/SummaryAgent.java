@@ -4,6 +4,7 @@ import com.zhemu.paperinsight.agent.config.AgentPromptConfig;
 import com.zhemu.paperinsight.agent.constant.AgentType;
 import io.agentscope.core.model.Model;
 import org.springframework.stereotype.Component;
+import com.zhemu.paperinsight.agent.config.AgentScopeModelConfig;
 
 /**
  * 摘要总结智能体
@@ -13,8 +14,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class SummaryAgent extends BaseAnalysisAgent {
 
-    public SummaryAgent(Model model, AgentPromptConfig promptConfig) {
-        super(model,
+    public SummaryAgent(AgentScopeModelConfig.ModelFactory modelFactory, AgentPromptConfig promptConfig) {
+        super(modelFactory,
                 promptConfig.getAgents().get(AgentType.SUMMARY.getConfigKey()),
                 AgentType.SUMMARY.getAgentName());
     }

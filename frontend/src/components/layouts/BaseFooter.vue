@@ -24,10 +24,10 @@ onMounted(() => {
 
 <template>
   <div class="h-full flex flex-col items-center justify-center text-gray-400 text-xs tracking-wider gap-1">
-    <div>© 2026 PaperInsight · 赋能科研新范式</div>
+    <div>© 2026 PaperInsight · {{ $t('home.copyright') }}</div>
     <div class="flex gap-4 opacity-80 scale-90">
-      <span>今日访客: {{ todayCount }}</span>
-      <span>总访问量: {{ totalCount }}</span>
+      <span>{{ $t('home.todayVisitors') }}: {{ todayCount }}</span>
+      <span>{{ $t('home.totalVisitors') }}: {{ totalCount }}</span>
     </div>
   </div>
 </template>
