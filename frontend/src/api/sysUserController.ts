@@ -153,12 +153,12 @@ export async function updateUser(
   });
 }
 
-/** 此处后端没有提供注释 POST /user/update/my */
-export async function updateMyInfo(
-  body: API.SysUserUpdateRequest,
+/** 此处后端没有提供注释 POST /user/update/email */
+export async function updateUserEmail(
+  body: API.SysUserUpdateEmailRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseBoolean>("/user/update/my", {
+  return request<API.BaseResponseBoolean>("/user/update/email", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -168,12 +168,12 @@ export async function updateMyInfo(
   });
 }
 
-/** 此处后端没有提供注释 POST /user/update/email */
-export async function updateUserEmail(
-  body: API.SysUserUpdateEmailRequest,
+/** 此处后端没有提供注释 POST /user/update/my */
+export async function updateMyInfo(
+  body: API.SysUserUpdateRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseBoolean>("/user/update/email", {
+  return request<API.BaseResponseBoolean>("/user/update/my", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -197,6 +197,7 @@ export async function updateUserPassword(
     ...(options || {}),
   });
 }
+
 /** 此处后端没有提供注释 GET /user/visit-count */
 export async function getVisitStats(options?: { [key: string]: any }) {
   return request<API.BaseResponseMapStringLong>("/user/visit-count", {

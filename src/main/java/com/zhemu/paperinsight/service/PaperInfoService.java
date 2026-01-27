@@ -8,6 +8,7 @@ import com.zhemu.paperinsight.common.BaseResponse;
 import com.zhemu.paperinsight.model.dto.paper.PaperAddRequest;
 import com.zhemu.paperinsight.model.dto.paper.PaperQueryRequest;
 import com.zhemu.paperinsight.model.entity.PaperInfo;
+import com.zhemu.paperinsight.model.vo.PaperDetailVO;
 import com.zhemu.paperinsight.model.vo.PaperVO;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -33,7 +34,7 @@ public interface PaperInfoService extends IService<PaperInfo> {
      */
     boolean physicalDelete(long id);
 
-    Long addPaper(PaperAddRequest paperAddRequest);
+    Long addPaper(PaperAddRequest paperAddRequest, HttpServletRequest request);
 
     QueryWrapper<PaperInfo> getQueryWrapper(PaperQueryRequest paperQueryRequest);
 
@@ -45,4 +46,13 @@ public interface PaperInfoService extends IService<PaperInfo> {
      * @return 分页结果
      */
     BaseResponse<Page<PaperVO>> listPublicPaperByPage(PaperQueryRequest paperQueryRequest, HttpServletRequest request);
+
+    /**
+     * 获取论文详情 (包含分析结果)
+     *
+     * @param id     论文ID
+     * @param userId 当前用户ID (用于查看权限或私有论文)
+     * @return 论文详情
+     */
+    PaperDetailVO getPaperDetail(long id, long userId);
 }

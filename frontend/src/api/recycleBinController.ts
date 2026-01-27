@@ -9,6 +9,9 @@ export async function physicalDelete(
 ) {
   return request<API.BaseResponseBoolean>("/recycle/delete", {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
     data: body,
     ...(options || {}),
   });
@@ -29,6 +32,9 @@ export async function restore(
 ) {
   return request<API.BaseResponseBoolean>("/recycle/restore", {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
     data: body,
     ...(options || {}),
   });

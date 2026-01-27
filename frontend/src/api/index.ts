@@ -8,6 +8,7 @@ import * as paperController from "./paperController";
 import * as folderController from "./folderController";
 import * as fileController from "./fileController";
 import * as mainController from "./mainController";
+import * as chatController from "./chatController";
 export default {
   sysUserController,
   recycleBinController,
@@ -15,4 +16,5 @@ export default {
   folderController,
   fileController,
   mainController,
+  chatController,
 };

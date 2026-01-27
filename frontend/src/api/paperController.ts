@@ -32,6 +32,21 @@ export async function deletePaper(
   });
 }
 
+/** 此处后端没有提供注释 GET /paper/get */
+export async function getPaperDetail(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.getPaperDetailParams,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponsePaperDetailVO>("/paper/get", {
+    method: "GET",
+    params: {
+      ...params,
+    },
+    ...(options || {}),
+  });
+}
+
 /** 此处后端没有提供注释 POST /paper/list/page */
 export async function listPaperByPage(
   body: API.PaperQueryRequest,

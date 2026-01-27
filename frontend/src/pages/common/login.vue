@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { User, Lock, Message, Key } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { userLogin } from '~/api/sysUserController'
 import { useUserStore } from '~/stores/user'
 import bgImage from '~/assets/login_bg.png'
-import logo from '~/assets/vue.svg'
+import logo from '~/assets/logo.svg'
 import request from '~/request'
 import { useDark } from '@vueuse/core'
 
@@ -16,7 +16,24 @@ isDark.value = false // 强制关闭暗黑模式
 
 const userStore = useUserStore()
 const router = useRouter()
+const route = useRoute()
 const activeTab = ref('account')
+
+// 获取重定向地址
+const getRedirectPath = () => {
+  const redirect = route.query.redirect as string
+  if (redirect) {
+    try {
+      const decodedPath = decodeURIComponent(redirect)
+      // 确保路径以 / 开头
+      return decodedPath.startsWith('/') ? decodedPath : `/${decodedPath}`
+    } catch (e) {
+      // 解码失败，使用原始值
+      return redirect.startsWith('/') ? redirect : `/${redirect}`
+    }
+  }
+  return '/'
+}
 
 // 账号登录表单
 const accountForm = reactive({
@@ -97,7 +114,9 @@ const handleLogin = async () => {
     if (res.code === 0 && res.data) {
       userStore.setLoginUser(res.data)
       ElMessage.success('登录成功')
-      router.push('/')
+      // 跳转到重定向地址或首页
+      const redirectPath = getRedirectPath()
+      router.push(redirectPath)
     } else {
       ElMessage.error(res.message || '登录失败')
     }
@@ -123,8 +142,8 @@ meta:
 
       <!-- 左上角：Logo -->
       <div class="absolute top-8 left-8 flex items-center gap-4 text-white z-10">
-        <div class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center border border-white/30">
-          <img :src="logo" alt="Logo" class="w-6 h-6" />
+        <div class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center border border-white/30">
+          <img :src="logo" alt="Logo" class="w-8 h-8" />
         </div>
         <span class="text-2xl font-bold tracking-wide">PaperInsight</span>
       </div>

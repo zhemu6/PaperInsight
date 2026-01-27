@@ -5,6 +5,7 @@ import { toggleDark } from '~/composables'
 import { useUserStore } from '~/stores/user'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { UserFilled, SwitchButton, User } from '@element-plus/icons-vue'
+import logo from '~/assets/logo.svg'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -39,7 +40,7 @@ const handleLogout = async () => {
   <el-menu class="el-menu-demo flex items-center px-4" mode="horizontal" :ellipsis="false">
     <!-- Logo Area -->
     <div class="flex items-center gap-2 mr-auto cursor-pointer" @click="router.push('/')">
-        <div class="i-ep-element-plus text-2xl text-[var(--el-color-primary)]"></div>
+        <img :src="logo" alt="PaperInsight Logo" class="h-8 w-8" />
         <span class="font-bold text-lg hidden sm:block">PaperInsight</span>
     </div>
 

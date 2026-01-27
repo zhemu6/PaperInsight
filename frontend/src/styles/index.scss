@@ -39,8 +39,3 @@ code {
   width: 100%;
   height: 2px;
 }
-
-// 修复 Element Plus 按钮背景色被 UnoCSS/Tailwind 重置为 transparent 的问题
-.el-button {
-  background-color: var(--el-button-bg-color);
-}

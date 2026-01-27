@@ -3,7 +3,9 @@
 CREATE DATABASE paper_insight;
 
 -- 2. 建表
--- 2.1 用户表
+-- =============================================
+-- 2.1 用户表 (sys_user)
+-- =============================================
 CREATE TABLE IF NOT EXISTS `sys_user`
 (
     `id`            bigint       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
@@ -25,7 +27,9 @@ CREATE TABLE IF NOT EXISTS `sys_user`
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci COMMENT ='用户表';
 
--- 2. 文件夹表 (folder)
+-- =============================================
+-- 2.2 文件夹表 (folder)
+-- =============================================
 CREATE TABLE IF NOT EXISTS `folder`
 (
     `id`          bigint       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
@@ -42,7 +46,9 @@ CREATE TABLE IF NOT EXISTS `folder`
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci COMMENT ='文件夹表';
 
--- 3. 论文信息表 (paper_info)
+-- =============================================
+-- 2.3 论文信息表 (paper_info)
+-- =============================================
 CREATE TABLE IF NOT EXISTS `paper_info`
 (
     `id`           bigint        NOT NULL AUTO_INCREMENT COMMENT '主键ID',
@@ -67,7 +73,9 @@ CREATE TABLE IF NOT EXISTS `paper_info`
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci COMMENT ='论文信息表';
 
--- 4. 论文智能分析表 (paper_insight)
+-- =============================================
+-- 2.4 论文智能分析表 (paper_insight)
+-- =============================================
 CREATE TABLE IF NOT EXISTS `paper_insight`
 (
     `id`                bigint   NOT NULL AUTO_INCREMENT COMMENT '主键ID',
@@ -84,3 +92,16 @@ CREATE TABLE IF NOT EXISTS `paper_insight`
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci COMMENT ='论文AI分析结果表';
+
+-- =============================================
+-- 2.5 AgentScope 会话保存表
+-- =============================================
+CREATE TABLE agentscope_sessions (
+                                     session_id VARCHAR(255) NOT NULL,
+                                     state_key VARCHAR(255) NOT NULL,
+                                     item_index INT NOT NULL DEFAULT 0,
+                                     state_data LONGTEXT NOT NULL,
+                                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                                     PRIMARY KEY (session_id, state_key, item_index)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

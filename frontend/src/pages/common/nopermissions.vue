@@ -5,7 +5,7 @@ import { User, Lock, Message, Key } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { userLogin } from '~/api/sysUserController'
 import bgImage from '~/assets/login_bg.png'
-import logo from '~/assets/vue.svg'
+import logo from '~/assets/logo.svg'
 import request from '~/request'
 import { useDark } from '@vueuse/core'
 
@@ -114,8 +114,8 @@ const handleLogin = async () => {
 
       <!-- 左上角：Logo -->
       <div class="absolute top-8 left-8 flex items-center gap-4 text-white z-10">
-        <div class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center border border-white/30">
-          <img :src="logo" alt="Logo" class="w-6 h-6" />
+        <div class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center border border-white/30">
+          <img :src="logo" alt="Logo" class="w-8 h-8" />
         </div>
         <span class="text-2xl font-bold tracking-wide">PaperInsight</span>
       </div>

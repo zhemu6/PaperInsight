@@ -29,10 +29,12 @@ myAxios.interceptors.response.use(
     if (data.code === 40100) {
       if (
         !response.request.responseURL.includes('user/get/login') &&
-        !window.location.pathname.includes('/user/login')
+        !window.location.pathname.includes('/common/login')
       ) {
         ElMessage.warning('请先登录')
-        window.location.href = `/user/login?redirect=${window.location.href}`
+        // 只保存路径和查询参数，避免完整 URL 过长
+        const redirectPath = window.location.pathname + window.location.search
+        window.location.href = `/common/login?redirect=${encodeURIComponent(redirectPath)}`
       }
       return Promise.reject(data)
     }

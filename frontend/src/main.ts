@@ -1,11 +1,13 @@
-import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
+import { createApp } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { handleHotUpdate, routes } from 'vue-router/auto-routes'
 import App from './App.vue'
 
-import '@unocss/reset/tailwind.css'
+// 使用 tailwind-compat.css 而不是 tailwind.css，避免按钮背景色被重置为 transparent
+// tailwind-compat.css 移除了按钮背景色的重置规则，兼容 Element Plus 等 UI 框架
+import '@unocss/reset/tailwind-compat.css'
 // 移除全量引入，恢复按需引入
 // 显式引入 API 组件的样式
 import 'element-plus/theme-chalk/src/message.scss'

@@ -17,6 +17,12 @@ declare namespace API {
     message?: string;
   };
 
+  type BaseResponseMapStringLong = {
+    code?: number;
+    data?: Record<string, any>;
+    message?: string;
+  };
+
   type BaseResponsePageFolderVO = {
     code?: number;
     data?: PageFolderVO;
@@ -32,6 +38,12 @@ declare namespace API {
   type BaseResponsePageSysUserVO = {
     code?: number;
     data?: PageSysUserVO;
+    message?: string;
+  };
+
+  type BaseResponsePaperDetailVO = {
+    code?: number;
+    data?: PaperDetailVO;
     message?: string;
   };
 
@@ -51,6 +63,15 @@ declare namespace API {
     code?: number;
     data?: SysUserVO;
     message?: string;
+  };
+
+  type chatStreamParams = {
+    paperId: number;
+    question: string;
+  };
+
+  type clearSessionParams = {
+    paperId: number;
   };
 
   type DeleteRequest = {
@@ -84,6 +105,10 @@ declare namespace API {
     userId?: number;
     createTime?: string;
     updateTime?: string;
+  };
+
+  type getPaperDetailParams = {
+    id: number;
   };
 
   type getUserByIdParams = {
@@ -146,11 +171,24 @@ declare namespace API {
     authors?: string;
     abstractInfo?: string;
     keywords?: string;
-    cosUrl: string;
-    coverUrl?: string; // Add coverUrl
+    cosUrl?: string;
+    coverUrl?: string;
     folderId?: number;
     isPublic?: number;
     publishDate?: string;
+  };
+
+  type PaperDetailVO = {
+    paperInfo?: PaperVO;
+    paperInsight?: PaperInsightVO;
+  };
+
+  type PaperInsightVO = {
+    summaryMarkdown?: string;
+    innovationPoints?: string;
+    methods?: string;
+    score?: number;
+    scoreDetails?: Record<string, any>;
   };
 
   type PaperQueryRequest = {
@@ -163,7 +201,7 @@ declare namespace API {
     title?: string;
     keywords?: string;
     authors?: string;
-    abstractInfo?: string; // Add abstractInfo
+    abstractInfo?: string;
   };
 
   type PaperUpdateRequest = {
@@ -171,9 +209,7 @@ declare namespace API {
     title?: string;
     authors?: string;
     abstractInfo?: string;
-    abstractInfo?: string;
-    keywords?: string;
-    coverUrl?: string; // Add coverUrl
+    coverUrl?: string;
     folderId?: number;
     isPublic?: number;
     publishDate?: string;
@@ -186,7 +222,7 @@ declare namespace API {
     abstractInfo?: string;
     keywords?: string;
     cosUrl?: string;
-    coverUrl?: string; // Add coverUrl
+    coverUrl?: string;
     folderId?: number;
     userId?: number;
     isPublic?: number;
@@ -203,6 +239,8 @@ declare namespace API {
   type sendCodeParams = {
     email: string;
   };
+
+  type ServerSentEventString = true;
 
   type SysUser = {
     id?: number;

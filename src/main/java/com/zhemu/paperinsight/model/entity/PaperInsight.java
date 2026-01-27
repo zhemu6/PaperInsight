@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * 论文AI分析结果表
+ * 
  * @author lushihao
  * @TableName paper_insight
  */
@@ -32,6 +33,11 @@ public class PaperInsight implements Serializable {
     private Long paperId;
 
     /**
+     * 用户ID
+     */
+    private Long userId;
+
+    /**
      * AI生成的摘要总结(Markdown)
      */
     private String summaryMarkdown;
@@ -50,6 +56,12 @@ public class PaperInsight implements Serializable {
      * 评分 (0-100)
      */
     private Integer score;
+
+    /**
+     * 评分详情 (JSON)
+     * 包含各维度评分和理由
+     */
+    private String scoreDetails;
 
     /**
      * 创建时间

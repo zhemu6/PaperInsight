@@ -4,11 +4,17 @@ import cn.hutool.core.bean.BeanUtil;
 import com.zhemu.paperinsight.model.entity.PaperInfo;
 import lombok.Data;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
+/**
+ * 论文 VO 类
+ * @author lushihao
+ */
 @Data
 public class PaperVO implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private Long id;

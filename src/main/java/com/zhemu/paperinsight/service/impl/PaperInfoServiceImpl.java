@@ -15,10 +15,22 @@ import com.zhemu.paperinsight.mapper.PaperInfoMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.zhemu.paperinsight.common.BaseResponse;
 import com.zhemu.paperinsight.common.ResultUtils;
+import com.zhemu.paperinsight.service.SysUserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import com.zhemu.paperinsight.model.dto.mq.PaperAnalysisMessage;
+import com.zhemu.paperinsight.model.entity.PaperInsight;
+import com.zhemu.paperinsight.service.PaperInsightService;
+import com.zhemu.paperinsight.config.RabbitMqConfig;
+import com.zhemu.paperinsight.common.UserContext;
+import cn.hutool.json.JSONUtil;
+import com.zhemu.paperinsight.model.vo.PaperDetailVO;
+import com.zhemu.paperinsight.model.vo.PaperInsightVO;
+import java.util.Map;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,20 +44,51 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PaperInfoServiceImpl extends ServiceImpl<PaperInfoMapper, PaperInfo>
         implements PaperInfoService {
+
+    private final RabbitTemplate rabbitTemplate;
+    private final PaperInsightService paperInsightService;
+    private final SysUserService userService;
+
     /**
      * 添加论文请求
-     * 
+     *
      * @param paperAddRequest 论文添加请求
      * @return 是否添加成功
      */
     @Override
-    public Long addPaper(PaperAddRequest paperAddRequest) {
+    @Transactional(rollbackFor = Exception.class)
+    public Long addPaper(PaperAddRequest paperAddRequest, HttpServletRequest request) {
         PaperInfo paperInfo = new PaperInfo();
         BeanUtils.copyProperties(paperAddRequest, paperInfo);
+        Long userId = userService.getLoginUser(request).getId();
         // 用户Id 插件会自动传入
         boolean result = this.save(paperInfo);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
-        return paperInfo.getId();
+
+        Long paperId = paperInfo.getId();
+
+        // 1. 初始化 PaperInsight 记录
+        PaperInsight insight = PaperInsight.builder()
+                .paperId(paperId)
+                .userId(userId)
+                // 可以设置初始状态，如 score=-1 代表分析中
+                .score(0)
+                .build();
+        paperInsightService.save(insight);
+
+        // 2. 发送分析消息到 MQ
+        if (StrUtil.isNotBlank(paperAddRequest.getCosUrl())) {
+            PaperAnalysisMessage msg = PaperAnalysisMessage.builder()
+                    .paperId(paperId)
+                    .userId(userId)
+                    .pdfUrl(paperAddRequest.getCosUrl())
+                    .build();
+
+            String jsonMsg = JSONUtil.toJsonStr(msg);
+            rabbitTemplate.convertAndSend(RabbitMqConfig.PAPER_ANALYSIS_QUEUE, jsonMsg);
+        }
+
+        return paperId;
     }
 
     @Override
@@ -88,7 +131,7 @@ public class PaperInfoServiceImpl extends ServiceImpl<PaperInfoMapper, PaperInfo
 
     /**
      * 还原论文
-     * 
+     *
      * @param id       论文 id
      * @param folderId 目标文件夹 id
      * @return 结果
@@ -100,7 +143,7 @@ public class PaperInfoServiceImpl extends ServiceImpl<PaperInfoMapper, PaperInfo
 
     /**
      * 彻底删除论文
-     * 
+     *
      * @param id 论文 id
      * @return 删除结果
      */
@@ -138,5 +181,38 @@ public class PaperInfoServiceImpl extends ServiceImpl<PaperInfoMapper, PaperInfo
         paperVOPage.setRecords(paperVOList);
 
         return ResultUtils.success(paperVOPage);
+    }
+
+    @Override
+    public PaperDetailVO getPaperDetail(long id, long userId) {
+        PaperInfo paperInfo = this.getById(id);
+        ThrowUtils.throwIf(paperInfo == null, ErrorCode.NOT_FOUND_ERROR);
+
+        // 如果不是公开的，且不是自己的，则无权访问
+        if (paperInfo.getIsPublic() == 0 && !paperInfo.getUserId().equals(userId)) {
+            ThrowUtils.throwIf(true, ErrorCode.NO_AUTH_ERROR);
+        }
+
+        PaperInsight insight = paperInsightService.getOne(new QueryWrapper<PaperInsight>().eq("paper_id", id));
+
+        PaperDetailVO vo = new PaperDetailVO();
+        vo.setPaperInfo(PaperVO.objToVo(paperInfo));
+
+        if (insight != null) {
+            PaperInsightVO insightVO = new PaperInsightVO();
+            // 忽略 scoreDetails 避免类型转换异常 (String -> Map)
+            BeanUtils.copyProperties(insight, insightVO, "scoreDetails");
+
+            if (StrUtil.isNotBlank(insight.getScoreDetails())) {
+                try {
+                    Map<String, Object> map = JSONUtil.toBean(insight.getScoreDetails(), Map.class);
+                    insightVO.setScoreDetails(map);
+                } catch (Exception e) {
+                    // 容错处理
+                }
+            }
+            vo.setPaperInsight(insightVO);
+        }
+        return vo;
     }
 }
