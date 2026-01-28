@@ -1,18 +1,18 @@
 package com.zhemu.paperinsight.agent.common;/*
- * Copyright 2024-2026 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+                                            * Copyright 2024-2026 the original author or authors.
+                                            *
+                                            * Licensed under the Apache License, Version 2.0 (the "License");
+                                            * you may not use this file except in compliance with the License.
+                                            * You may obtain a copy of the License at
+                                            *
+                                            *      http://www.apache.org/licenses/LICENSE-2.0
+                                            *
+                                            * Unless required by applicable law or agreed to in writing, software
+                                            * distributed under the License is distributed on an "AS IS" BASIS,
+                                            * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+                                            * See the License for the specific language governing permissions and
+                                            * limitations under the License.
+                                            */
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.mapping.DenseVectorProperty;
@@ -89,9 +89,10 @@ import reactor.core.scheduler.Schedulers;
  *     List<Document> results = store.search(queryEmbedding, 5, 0.7).block();
  * }
  * }</pre>
+ * 
  * @author lushihao
  */
-//@Component
+// @Component
 public class ElasticsearchStore implements VDBStoreBase, AutoCloseable {
     private static final Logger log = LoggerFactory.getLogger(ElasticsearchStore.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -185,11 +186,11 @@ public class ElasticsearchStore implements VDBStoreBase, AutoCloseable {
         }
 
         return Mono.fromCallable(
-                        () -> {
-                            ensureNotClosed();
-                            executeBulkAdd(documents);
-                            return null;
-                        })
+                () -> {
+                    ensureNotClosed();
+                    executeBulkAdd(documents);
+                    return null;
+                })
                 .subscribeOn(Schedulers.boundedElastic())
                 .doOnError(e -> log.error("Failed to add documents to Elasticsearch", e))
                 .onErrorMap(
@@ -234,10 +235,10 @@ public class ElasticsearchStore implements VDBStoreBase, AutoCloseable {
         int limit = searchDocumentDto.getLimit();
         Double scoreThreshold = searchDocumentDto.getScoreThreshold();
         return Mono.fromCallable(
-                        () -> {
-                            ensureNotClosed();
-                            return executeSearch(queryEmbedding, limit, scoreThreshold);
-                        })
+                () -> {
+                    ensureNotClosed();
+                    return executeSearch(queryEmbedding, limit, scoreThreshold);
+                })
                 .subscribeOn(Schedulers.boundedElastic())
                 .doOnError(e -> log.error("Error during vector search", e))
                 .onErrorMap(e -> new VectorStoreException("Vector search failed", e));
@@ -291,15 +292,56 @@ public class ElasticsearchStore implements VDBStoreBase, AutoCloseable {
         }
 
         return Mono.fromCallable(
-                        () -> {
-                            ensureNotClosed();
-                            return client.delete(d -> d.index(indexName).id(id));
-                        })
+                () -> {
+                    ensureNotClosed();
+                    return client.delete(d -> d.index(indexName).id(id));
+                })
                 .subscribeOn(Schedulers.boundedElastic())
                 .map(response -> response.result().name().equals("Deleted"))
                 .onErrorMap(
                         e -> new VectorStoreException(
                                 "Failed to delete document from Elasticsearch", e));
+    }
+
+    /**
+     * Performs a full-text search on the content field.
+     *
+     * @param keyword the keyword to search for
+     * @param limit   the maximum number of results to return
+     * @return a Mono containing the list of matching documents
+     */
+    public Mono<List<Document>> searchByText(String keyword, int limit) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return Mono.just(new ArrayList<>());
+        }
+
+        return Mono.fromCallable(
+                () -> {
+                    ensureNotClosed();
+                    return executeTextSearch(keyword, limit);
+                })
+                .subscribeOn(Schedulers.boundedElastic())
+                .doOnError(e -> log.error("Error during text search", e))
+                .onErrorMap(e -> new VectorStoreException("Text search failed", e));
+    }
+
+    private List<Document> executeTextSearch(String keyword, int limit) throws Exception {
+        SearchRequest searchRequest = SearchRequest.of(
+                s -> s.index(indexName)
+                        .query(q -> q.match(m -> m.field(FIELD_CONTENT).query(f -> f.stringValue(keyword))))
+                        .size(limit));
+
+        SearchResponse<Map<String, Object>> response = client.search(searchRequest,
+                (Class<Map<String, Object>>) (Class<?>) Map.class);
+        List<Document> results = new ArrayList<>();
+
+        for (Hit<Map<String, Object>> hit : response.hits().hits()) {
+            Document doc = mapFromEsHit((Hit<Map>) (Hit<?>) hit);
+            if (doc != null) {
+                results.add(doc);
+            }
+        }
+        return results;
     }
 
     @Override
@@ -348,7 +390,11 @@ public class ElasticsearchStore implements VDBStoreBase, AutoCloseable {
             Property idProperty = new Property.Builder().keyword(new KeywordProperty.Builder().build()).build();
 
             Property contentProperty = new Property.Builder()
-                    .text(new TextProperty.Builder().index(false).build())
+                    .text(new TextProperty.Builder()
+                            .index(true)
+                            .analyzer("ik_max_word")
+                            .searchAnalyzer("ik_smart")
+                            .build())
                     .build();
 
             Property vectorProperty = new Property.Builder()
@@ -410,9 +456,21 @@ public class ElasticsearchStore implements VDBStoreBase, AutoCloseable {
         map.put(FIELD_CHUNK_ID, meta.getChunkId());
 
         // Serialize ContentBlock to JSON string to ensure safe storage/retrieval
+        // But store raw text for full-text search if possible
         try {
             String contentJson = OBJECT_MAPPER.writeValueAsString(meta.getContent());
             map.put(FIELD_CONTENT, contentJson);
+
+            // 如果是 TextBlock，额外存储纯文本内容以支持更好的全文检索
+            // 注意：这需要 ES 索引结构支持多字段，或者我们直接搜 JSON。
+            // 当前配置是 content 字段 index=true, analyzer=ik_max_word
+            // 如果 content 是 JSON 字符串 {"type":"text","text":"..."}, ik 分词器会将 "type", "text"
+            // 也分词。
+            // 搜索时，如果搜 "Transformer", JSON 中的 "Transformer" 会被匹配到。
+            // 但为了更精准，最好只索引 text 值。
+            // 不过鉴于修改 ES Mapping 需要删库重建，目前维持现状，JSON 字符串全文索引通常也能工作，
+            // 只是会搜到一些噪音（如 key 名）。
+
         } catch (Exception e) {
             log.warn("Failed to serialize content, using text representation", e);
             map.put(FIELD_CONTENT, meta.getContentText());

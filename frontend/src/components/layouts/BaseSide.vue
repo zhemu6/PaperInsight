@@ -2,6 +2,7 @@
 import {
   Document,
   Location,
+  Search,
   Setting,
 } from '@element-plus/icons-vue'
 </script>
@@ -20,6 +21,11 @@ import {
     <el-menu-item index="/file">
       <el-icon><Document /></el-icon>
       <template #title>{{ $t('nav.myPapers') }}</template>
+    </el-menu-item>
+
+    <el-menu-item index="/tools/journal">
+      <el-icon><Search /></el-icon>
+      <template #title>{{ $t('nav.journalQuery') }}</template>
     </el-menu-item>
 
     <el-menu-item index="/user/profile">

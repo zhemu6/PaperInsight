@@ -27,12 +27,15 @@ import com.zhemu.paperinsight.common.UserContext;
 import cn.hutool.json.JSONUtil;
 import com.zhemu.paperinsight.model.vo.PaperDetailVO;
 import com.zhemu.paperinsight.model.vo.PaperInsightVO;
-import java.util.Map;
+import com.zhemu.paperinsight.agent.common.ElasticsearchStore;
+import io.agentscope.core.rag.model.Document;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -48,6 +51,7 @@ public class PaperInfoServiceImpl extends ServiceImpl<PaperInfoMapper, PaperInfo
     private final RabbitTemplate rabbitTemplate;
     private final PaperInsightService paperInsightService;
     private final SysUserService userService;
+    private final ElasticsearchStore elasticsearchStore;
 
     /**
      * 添加论文请求
@@ -164,6 +168,7 @@ public class PaperInfoServiceImpl extends ServiceImpl<PaperInfoMapper, PaperInfo
             HttpServletRequest request) {
         long current = paperQueryRequest.getPageNum();
         long size = paperQueryRequest.getPageSize();
+        String contentKeyword = paperQueryRequest.getContentKeyword();
         // 限制爬虫
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
 
@@ -171,6 +176,40 @@ public class PaperInfoServiceImpl extends ServiceImpl<PaperInfoMapper, PaperInfo
         QueryWrapper<PaperInfo> queryWrapper = this.getQueryWrapper(paperQueryRequest);
         // 强制只查公开的
         queryWrapper.eq("is_public", 1);
+
+        // 如果包含 contentKeyword，先去 ES 查出 paper IDs
+        if (StrUtil.isNotBlank(contentKeyword)) {
+            try {
+                // 搜索最多 50 个相关文档
+                List<Document> esDocs = elasticsearchStore.searchByText(paperQueryRequest.getContentKeyword(), 50).block();
+                if (esDocs != null && !esDocs.isEmpty()) {
+                    List<Long> paperIds = esDocs.stream()
+                            .map(doc -> {
+                                try {
+                                    return Long.parseLong(doc.getMetadata().getDocId());
+                                } catch (Exception e) {
+                                    return null;
+                                }
+                            })
+                            .filter(Objects::nonNull)
+                            .distinct()
+                            .collect(Collectors.toList());
+
+                    if (!paperIds.isEmpty()) {
+                        queryWrapper.in("id", paperIds);
+                    } else {
+                        // 搜不到结果，返回空
+                        return ResultUtils.success(new Page<>(current, size));
+                    }
+                } else {
+                    // 搜不到结果
+                    return ResultUtils.success(new Page<>(current, size));
+                }
+            } catch (Exception e) {
+                log.error("ES search failed", e);
+                // 降级：忽略全文搜索，或者报错。这里选择忽略，继续查 DB
+            }
+        }
 
         Page<PaperInfo> paperInfoPage = this.page(new Page<>(current, size), queryWrapper);
 

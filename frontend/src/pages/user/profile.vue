@@ -1,18 +1,18 @@
 <template>
-  <div class="settings-page p-6 max-w-screen-xl mx-auto">
+  <div class="settings-page max-w-screen-xl mx-auto">
     <!-- 顶部标题 -->
     <div class="mb-8">
-      <h1 class="text-2xl font-bold text-slate-800 mb-2">{{ t('user.profileInfo.editTitle') }}</h1>
-      <p class="text-slate-500">{{ t('user.profileInfo.editSubtitle') }}</p>
+      <h1 class="text-2xl font-bold text-[var(--el-text-color-primary)] mb-2">{{ t('user.profileInfo.editTitle') }}</h1>
+      <p class="text-[var(--el-text-color-secondary)]">{{ t('user.profileInfo.editSubtitle') }}</p>
     </div>
 
     <div class="flex flex-col md:flex-row gap-6">
       <!-- 左侧导航 -->
       <div class="w-full md:w-64 flex-shrink-0">
-        <el-card shadow="never" class="rounded-xl border-none shadow-sm">
+        <el-card shadow="never" class="!rounded-xl !border-none shadow-sm">
           <el-menu
             :default-active="activeTab"
-            class="border-none w-full !border-r-0"
+            class="!border-none w-full !border-r-0"
             @select="handleMenuSelect"
           >
             <el-menu-item index="profile">
@@ -33,14 +33,14 @@
 
       <!-- 右侧内容 -->
       <div class="flex-1">
-        <el-card shadow="never" class="rounded-xl border-none shadow-sm min-h-[600px]">
+        <el-card shadow="never" class="!rounded-xl !border-none shadow-sm min-h-[600px]">
           <!-- 个人信息面板 -->
           <div v-if="activeTab === 'profile'" class="p-4">
-            <h2 class="text-lg font-medium text-slate-800 mb-8">{{ t('user.profileInfo.basicTitle') }}</h2>
+            <h2 class="text-lg font-medium text-[var(--el-text-color-primary)] mb-8">{{ t('user.profileInfo.basicTitle') }}</h2>
 
             <el-form :model="formState" label-position="top" class="max-w-3xl">
               <div class="mb-8">
-                <h3 class="text-sm font-medium text-slate-500 mb-4">{{ t('user.profileInfo.basicSubtitle') }}</h3>
+                <h3 class="text-sm font-medium text-[var(--el-text-color-secondary)] mb-4">{{ t('user.profileInfo.basicSubtitle') }}</h3>
                 <el-form-item :label="t('user.profileInfo.userNameLabel')" prop="userName">
                   <el-input v-model="formState.userName" size="large" :placeholder="t('user.profileInfo.userNamePlaceholder')" />
                 </el-form-item>
@@ -57,9 +57,9 @@
               </div>
 
               <div class="mb-8">
-                <h3 class="text-sm font-medium text-slate-500 mb-4">{{ t('user.profileInfo.avatarLabel') }}</h3>
+                <h3 class="text-sm font-medium text-[var(--el-text-color-secondary)] mb-4">{{ t('user.profileInfo.avatarLabel') }}</h3>
                 <div class="flex items-center gap-6">
-                   <el-avatar :size="80" :src="formState.userAvatar" class="flex-shrink-0 text-2xl bg-blue-100 text-blue-600">
+                   <el-avatar :size="80" :src="formState.userAvatar" class="flex-shrink-0 text-2xl bg-[var(--el-color-primary-light-9)] text-[var(--el-color-primary)]">
                       {{ formState.userName?.charAt(0)?.toUpperCase() }}
                    </el-avatar>
                    <div>
@@ -71,12 +71,12 @@
                        >
                          <el-button type="primary" link class="font-medium cursor-pointer">{{ t('user.profileInfo.uploadText') }}</el-button>
                        </el-upload>
-                       <p class="text-slate-400 text-xs mt-1">{{ t('user.profileInfo.uploadHint') }}</p>
+                       <p class="text-[var(--el-text-color-placeholder)] text-xs mt-1">{{ t('user.profileInfo.uploadHint') }}</p>
                    </div>
                 </div>
               </div>
 
-              <div class="flex justify-end gap-3 mt-12 pt-6 border-t border-slate-100">
+              <div class="flex justify-end gap-3 mt-12 pt-6 border-t border-[var(--el-border-color-lighter)]">
                  <el-button size="large" @click="handleReset">{{ t('user.profileInfo.cancel') }}</el-button>
                  <el-button type="primary" size="large" :loading="loading" @click="handleSave">{{ t('user.profileInfo.save') }}</el-button>
               </div>
@@ -89,36 +89,36 @@
               <div v-if="securityView === 'list'">
                   <!-- Account Security -->
                   <div class="mb-10">
-                      <h3 class="text-base font-bold text-slate-800 mb-4">{{ t('user.security.title') }}</h3>
-                      <p class="text-slate-500 text-sm mb-6">{{ t('user.security.subtitle') }}</p>
+                      <h3 class="text-base font-bold text-[var(--el-text-color-primary)] mb-4">{{ t('user.security.title') }}</h3>
+                      <p class="text-[var(--el-text-color-secondary)] text-sm mb-6">{{ t('user.security.subtitle') }}</p>
 
                       <div class="space-y-4">
                           <!-- Email -->
-                          <div class="border border-slate-200 rounded-lg p-6 flex items-center justify-between hover:border-blue-300 transition-colors">
+                          <div class="border border-[var(--el-border-color-lighter)] rounded-lg p-6 flex items-center justify-between hover:border-[var(--el-color-primary-light-5)] transition-colors">
                               <div class="flex items-center gap-4">
-                                  <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center text-xl">
+                                  <div class="w-10 h-10 rounded-full bg-[var(--el-color-primary-light-9)] text-[var(--el-color-primary)] flex items-center justify-center text-xl">
                                       <el-icon><Message /></el-icon>
                                   </div>
                                   <div>
-                                      <div class="font-medium text-slate-700 text-base">{{ t('user.security.email.label') }}</div>
-                                      <div class="text-slate-500 text-sm mt-1">{{ currentUser.email || t('user.security.email.notBound') }}</div>
+                                      <div class="font-medium text-[var(--el-text-color-regular)] text-base">{{ t('user.security.email.label') }}</div>
+                                      <div class="text-[var(--el-text-color-secondary)] text-sm mt-1">{{ currentUser.email || t('user.security.email.notBound') }}</div>
                                   </div>
                               </div>
-                              <el-button type="primary" link class="!text-slate-400 hover:!text-blue-600" @click="securityView = 'email'">{{ t('user.security.email.change') }} <el-icon class="ml-1"><ArrowRight /></el-icon></el-button>
+                              <el-button type="primary" link class="!text-[var(--el-text-color-secondary)] hover:!text-[var(--el-color-primary)]" @click="securityView = 'email'">{{ t('user.security.email.change') }} <el-icon class="ml-1"><ArrowRight /></el-icon></el-button>
                           </div>
 
                           <!-- Password -->
-                          <div class="border border-slate-200 rounded-lg p-6 flex items-center justify-between hover:border-blue-300 transition-colors">
+                          <div class="border border-[var(--el-border-color-lighter)] rounded-lg p-6 flex items-center justify-between hover:border-[var(--el-color-primary-light-5)] transition-colors">
                               <div class="flex items-center gap-4">
-                                  <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center text-xl">
+                                  <div class="w-10 h-10 rounded-full bg-[var(--el-color-primary-light-9)] text-[var(--el-color-primary)] flex items-center justify-center text-xl">
                                       <el-icon><Lock /></el-icon>
                                   </div>
                                   <div>
-                                      <div class="font-medium text-slate-700 text-base">{{ t('user.security.password.label') }}</div>
-                                      <div class="text-slate-500 text-sm mt-1">{{ t('user.security.password.desc') }}</div>
+                                      <div class="font-medium text-[var(--el-text-color-regular)] text-base">{{ t('user.security.password.label') }}</div>
+                                      <div class="text-[var(--el-text-color-secondary)] text-sm mt-1">{{ t('user.security.password.desc') }}</div>
                                   </div>
                               </div>
-                              <el-button type="primary" link class="!text-slate-400 hover:!text-blue-600" @click="securityView = 'password'">{{ t('user.security.password.change') }} <el-icon class="ml-1"><ArrowRight /></el-icon></el-button>
+                              <el-button type="primary" link class="!text-[var(--el-text-color-secondary)] hover:!text-[var(--el-color-primary)]" @click="securityView = 'password'">{{ t('user.security.password.change') }} <el-icon class="ml-1"><ArrowRight /></el-icon></el-button>
                           </div>
                       </div>
                   </div>
@@ -126,11 +126,11 @@
 
               <!-- Update Email View -->
               <div v-if="securityView === 'email'">
-                  <div class="mb-8 cursor-pointer text-slate-500 hover:text-blue-600 flex items-center gap-2" @click="securityView = 'list'">
+                  <div class="mb-8 cursor-pointer text-[var(--el-text-color-secondary)] hover:text-[var(--el-color-primary)] flex items-center gap-2" @click="securityView = 'list'">
                        <el-icon><ArrowLeft /></el-icon> {{ t('user.security.back') }}
                   </div>
-                  <h2 class="text-xl font-bold text-slate-800 mb-2">{{ t('user.security.email.title') }}</h2>
-                  <p class="text-slate-500 mb-8">{{ t('user.security.email.subtitle') }}</p>
+                  <h2 class="text-xl font-bold text-[var(--el-text-color-primary)] mb-2">{{ t('user.security.email.title') }}</h2>
+                  <p class="text-[var(--el-text-color-secondary)] mb-8">{{ t('user.security.email.subtitle') }}</p>
 
                   <el-alert :title="t('user.security.email.warning')" type="info" show-icon class="mb-8" :closable="false" />
 
@@ -161,11 +161,11 @@
 
               <!-- Update Password View -->
               <div v-if="securityView === 'password'">
-                   <div class="mb-8 cursor-pointer text-slate-500 hover:text-blue-600 flex items-center gap-2" @click="securityView = 'list'">
+                   <div class="mb-8 cursor-pointer text-[var(--el-text-color-secondary)] hover:text-[var(--el-color-primary)] flex items-center gap-2" @click="securityView = 'list'">
                        <el-icon><ArrowLeft /></el-icon> {{ t('user.security.back') }}
                   </div>
-                  <h2 class="text-xl font-bold text-slate-800 mb-2">{{ t('user.security.password.title') }}</h2>
-                  <p class="text-slate-500 mb-8">{{ t('user.security.password.subtitle') }}</p>
+                  <h2 class="text-xl font-bold text-[var(--el-text-color-primary)] mb-2">{{ t('user.security.password.title') }}</h2>
+                  <p class="text-[var(--el-text-color-secondary)] mb-8">{{ t('user.security.password.subtitle') }}</p>
 
                    <el-alert :title="t('user.security.password.warning')" type="info" show-icon class="mb-8" :closable="false" />
 
@@ -191,7 +191,7 @@
           </div>
 
           <!-- 偏好设置面板 -->
-          <div v-if="activeTab === 'preference'" class="p-4 flex items-center justify-center h-[400px] text-slate-400">
+          <div v-if="activeTab === 'preference'" class="p-4 flex items-center justify-center h-[400px] text-[var(--el-text-color-placeholder)]">
              {{ t('user.preference.developing') }}
           </div>
         </el-card>
@@ -458,8 +458,8 @@ onMounted(() => {
 
 <style scoped>
 :deep(.el-menu-item.is-active) {
-    background-color: #eff6ff !important;
-    color: #2563eb !important;
+    background-color: var(--el-color-primary-light-9) !important;
+    color: var(--el-color-primary) !important;
     font-weight: 500;
 }
 :deep(.el-menu-item) {
@@ -467,10 +467,10 @@ onMounted(() => {
     line-height: 48px;
     margin-bottom: 8px;
     border-radius: 8px;
-    color: #64748b;
+    color: var(--el-text-color-regular);
 }
 :deep(.el-menu-item:hover) {
-    color: #334155;
-    background-color: #f8fafc;
+    color: var(--el-text-color-primary);
+    background-color: var(--el-fill-color-light);
 }
 </style>

@@ -47,4 +47,9 @@ public class PaperQueryRequest extends PageRequest implements Serializable {
      * 摘要 (模糊)
      */
     private String abstractInfo;
+
+    /**
+     * 全文关键词 (ES 搜索)
+     */
+    private String contentKeyword;
 }

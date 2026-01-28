@@ -64,12 +64,22 @@ public class PaperAnalysisAgent {
         String scoreJson = extractContent(tuple.getT4());
 
         Integer finalScore = 0;
+        String validScoreJson = "{}"; // 默认空JSON对象
+        
         try {
             // 尝试从JSON中解析分数
-            JSONObject json = JSONUtil.parseObj(scoreJson);
+            // 有时候模型可能输出 ```json ... ``` 格式，需要清洗
+            String cleanedJson = cleanJsonString(scoreJson);
+            JSONObject json = JSONUtil.parseObj(cleanedJson);
             finalScore = json.getInt("score", 0);
+            validScoreJson = json.toString(); // 确保是合法的 JSON 字符串
         } catch (Exception e) {
-            log.warn("Failed to parse score JSON: {}", scoreJson);
+            log.warn("Failed to parse score JSON: {}. Using default.", scoreJson);
+            // 构造一个包含错误信息的 JSON，确保存入数据库时不报错
+            JSONObject errorJson = new JSONObject();
+            errorJson.set("error", "Failed to parse AI response");
+            errorJson.set("rawResponse", scoreJson);
+            validScoreJson = errorJson.toString();
         }
 
         return PaperInsight.builder()
@@ -78,8 +88,26 @@ public class PaperAnalysisAgent {
                 .innovationPoints(innovation)
                 .methods(methods)
                 .score(finalScore)
-                .scoreDetails(scoreJson)
+                .scoreDetails(validScoreJson)
                 .build();
+    }
+
+    /**
+     * 清洗 JSON 字符串，去除可能的 Markdown 代码块标记
+     */
+    private String cleanJsonString(String jsonStr) {
+        if (jsonStr == null) return "{}";
+        String cleaned = jsonStr.trim();
+        // 去除 ```json 和 ``` 包裹
+        if (cleaned.startsWith("```json")) {
+            cleaned = cleaned.substring(7);
+        } else if (cleaned.startsWith("```")) {
+            cleaned = cleaned.substring(3);
+        }
+        if (cleaned.endsWith("```")) {
+            cleaned = cleaned.substring(0, cleaned.length() - 3);
+        }
+        return cleaned.trim();
     }
 
     private String extractContent(Msg msg) {

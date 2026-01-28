@@ -67,7 +67,7 @@ onMounted(() => {
         </h1>
         <div class="flex items-center gap-2 text-xs text-gray-500">
           <el-tag size="small" type="info">
-            {{ detail?.paperInfo?.publishDate || 'Unknown Date' }}
+            {{ detail?.paperInfo?.publishDate || $t('common.unknown') }}
           </el-tag>
           <span class="max-w-[200px] truncate">{{ detail?.paperInfo?.authors }}</span>
         </div>

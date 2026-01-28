@@ -13,6 +13,7 @@ import com.zhemu.paperinsight.model.entity.PaperInsight;
 import com.zhemu.paperinsight.service.PaperInsightService;
 import io.agentscope.core.rag.Knowledge;
 import io.agentscope.core.rag.model.Document;
+import io.agentscope.core.rag.model.DocumentMetadata;
 import io.agentscope.core.rag.reader.ReaderInput;
 import io.agentscope.core.rag.reader.SplitStrategy;
 import io.agentscope.core.rag.reader.TextReader;
@@ -82,10 +83,30 @@ public class AnalysisTaskConsumer {
                         // 使用 TextReader 切分文本
                         TextReader textReader = new TextReader(512, SplitStrategy.PARAGRAPH, 50);
                         List<Document> docs = textReader.read(ReaderInput.fromString(extractedText)).block();
-                        // 执行入库
-                        knowledge.addDocuments(docs).block();
-                        log.info("RAG indexing completed for paperId: {}, docs count: {}", task.getPaperId(),
-                                docs.size());
+                        
+                        // 显式设置 docId 为 paperId，确保后续可以反查
+                        // 注意: DocumentMetadata 可能是 Record (Java 14+) 或不可变对象，因此我们重建 Document
+                        if (docs != null) {
+                            List<Document> newDocs = docs.stream().map(doc -> {
+                                DocumentMetadata oldMeta = doc.getMetadata();
+                                // 重建 Metadata，将 docId 设为 paperId
+                                DocumentMetadata newMeta = new DocumentMetadata(
+                                        oldMeta.getContent(),
+                                        String.valueOf(task.getPaperId()), // 设置 paperId
+                                        oldMeta.getChunkId()
+
+                                );
+                                // 重建 Document
+                                Document newDoc = new Document(newMeta);
+                                newDoc.setEmbedding(doc.getEmbedding()); // 保留 embedding (虽然此时通常为空)
+                                newDoc.setScore(doc.getScore());
+                                return newDoc;
+                            }).collect(Collectors.toList());
+
+                            knowledge.addDocuments(newDocs).block();
+                            log.info("RAG indexing completed for paperId: {}, docs count: {}", task.getPaperId(),
+                                    newDocs.size());
+                        }
                     } else {
                         log.warn("Failed to extract text from PDF for paperId: {}", task.getPaperId());
                     }

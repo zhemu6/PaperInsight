@@ -185,7 +185,7 @@ export const useChatStore = defineStore('chat', () => {
     try {
       isLoading.value = true
       const history = await getChatHistory(chatId)
-      console.log('Raw history from backend:', history)
+      // console.log('Raw history from backend:', history)
       if (history && history.length > 0) {
         const mergedMessages: ChatMessage[] = []
         
@@ -221,18 +221,18 @@ export const useChatStore = defineStore('chat', () => {
           // 将 model 和 tool 都视为 assistant，以便在UI上合并成一个连续的对话流
           const role = (item.role === 'model' || item.role === 'tool') ? 'assistant' : item.role
           
-          console.log(`Processing msg ${index} [${role}]:`, items)
+          // console.log(`Processing msg ${index} [${role}]:`, items)
 
           // 如果当前是 assistant 且上一条也是 assistant，则合并
           if (role === 'assistant' && mergedMessages.length > 0 && mergedMessages[mergedMessages.length - 1].role === 'assistant') {
             const lastMsg = mergedMessages[mergedMessages.length - 1]
-            console.log('Merging into lastMsg:', lastMsg.id)
+            // console.log('Merging into lastMsg:', lastMsg.id)
             
             // 合并 items 列表，保持由上到下的时序
             if (!lastMsg.items) {
                lastMsg.items = []
             }
-            console.log('processed items:', items)
+            // console.log('processed items:', items)
             // 去重逻辑：如果新的一批 item 里的第一个是 text，且和 lastMsg 最后一个 item (也是 text) 内容一样，则跳过
             // 这可以防止 history 接口有时候返回重复内容块导致的显示问题
             items.forEach(newItem => {

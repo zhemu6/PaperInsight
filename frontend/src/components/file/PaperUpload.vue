@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { reactive, ref, watch, onMounted } from 'vue'
-import { ElMessage, type UploadFile, type UploadRequestOptions } from 'element-plus'
+import { reactive, ref, watch } from 'vue'
+import { ElMessage, type UploadRequestOptions } from 'element-plus'
 import { uploadFile } from '~/api/fileController'
 import { addPaper } from '~/api/paperController'
 import * as pdfjsLib from 'pdfjs-dist'
@@ -122,7 +122,7 @@ const generateCover = async (file: File): Promise<string> => {
         return new Promise((resolve) => {
             canvas.toBlob(async (blob) => {
                 if (blob) {
-                    console.log('Blob created, size:', blob.size)
+                    // console.log('Blob created, size:', blob.size)
                     const uploadData = new FormData()
                     uploadData.append('file', blob, 'cover.png')
                     try {

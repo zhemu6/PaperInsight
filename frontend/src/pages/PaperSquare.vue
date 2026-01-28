@@ -14,7 +14,8 @@ const searchForm = reactive({
     title: '',
     authors: '',
     keywords: '',
-    abstractInfo: ''
+    abstractInfo: '',
+    contentKeyword: ''
 })
 const papers = ref<any[]>([])
 const currentPage = ref(1)
@@ -56,6 +57,7 @@ const resetSearch = () => {
     searchForm.authors = ''
     searchForm.keywords = ''
     searchForm.abstractInfo = ''
+    searchForm.contentKeyword = ''
     handleSearch()
 }
 
@@ -80,8 +82,8 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="h-full flex flex-col p-6">
-        <div class="mb-4 bg-white dark:bg-gray-800 p-4 rounded shadow-sm border border-gray-100 dark:border-gray-800">
+    <div class="h-full flex flex-col">
+        <div class="mb-6 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100 dark:border-gray-800">
              <div class="mb-2 font-bold text-sm text-gray-500 dark:text-gray-400">{{ $t('paperSquare.advancedSearch') }}</div>
             <el-form :inline="true" :model="searchForm" class="flex flex-wrap items-center gap-2">
                 <el-form-item :label="$t('paperSquare.titleLabel')" class="mb-0!">
@@ -93,100 +95,81 @@ onMounted(() => {
                 <el-form-item :label="$t('paperSquare.keywords')" class="mb-0!">
                      <el-input v-model="searchForm.keywords" :placeholder="$t('paperSquare.keywordsPlaceholder')" clearable style="width: 140px" />
                 </el-form-item>
+                <el-form-item :label="$t('paperSquare.content')" class="mb-0!">
+                     <el-input v-model="searchForm.contentKeyword" :placeholder="$t('paperSquare.contentPlaceholder')" clearable style="width: 160px">
+                        <template #prefix>
+                            <div class="i-ep-document-search text-gray-400" />
+                        </template>
+                     </el-input>
+                </el-form-item>
                 <el-form-item :label="$t('paperSquare.abstract')" class="mb-0!">
-                     <el-input v-model="searchForm.abstractInfo" :placeholder="$t('paperSquare.abstractPlaceholder')" clearable style="width: 160px" />
+                    <el-input v-model="searchForm.abstractInfo" :placeholder="$t('paperSquare.abstractPlaceholder')" clearable style="width: 160px" />
                 </el-form-item>
                 <el-form-item class="mb-0!">
                     <el-button type="primary" @click="handleSearch">{{ $t('common.search') }}</el-button>
-                     <el-button @click="resetSearch">{{ $t('common.reset') }}</el-button>
+                    <el-button @click="resetSearch">{{ $t('common.reset') }}</el-button>
                 </el-form-item>
             </el-form>
         </div>
 
-        <div v-loading="loading" class="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
-            <el-row v-if="papers.length > 0" :gutter="20">
-                <el-col
-                    v-for="paper in papers"
-                    :key="paper.id"
-                    :xs="24" :sm="12" :md="12" :lg="8" :xl="6"
-                >
-                    <el-card 
-                        :body-style="{ padding: '0px' }" 
-                        class="h-full hover:shadow-lg transition-shadow duration-300 cursor-pointer flex flex-col"
-                        shadow="hover"
-                        @click="goToDetail(paper.id)"
-                    >
-                        <template #header>
-                            <div class="flex flex-col gap-1.5">
-                                <span class="font-bold truncate text-base" :title="paper.title" style="color: var(--el-text-color-primary);">{{ paper.title }}</span>
-                                <div class="text-xs flex items-center" style="color: var(--el-text-color-secondary);">
-                                    <el-icon class="mr-1"><User /></el-icon>
-                                    <span class="truncate" :title="paper.authors">{{ paper.authors || $t('common.unknown') }}</span>
-                                </div>
-                            </div>
-                        </template>
-
-                        <div class="relative h-48 group overflow-hidden border-b" style="background-color: var(--el-fill-color-extra-light); border-color: var(--el-border-color-lighter);">
+        <div v-loading="loading" class="flex-1 overflow-auto">
+             <el-row :gutter="20">
+                <el-col v-for="paper in papers" :key="paper.id" :xs="24" :sm="12" :md="8" :lg="6" :xl="6" class="mb-4">
+                    <el-card class="h-full cursor-pointer hover:shadow-lg transition-all duration-300 !rounded-xl !border-gray-100 dark:!border-gray-800" :body-style="{ padding: '0px', height: '100%', display: 'flex', flexDirection: 'column' }" shadow="hover" @click="goToDetail(paper.id)">
+                        <!-- Cover Image -->
+                        <div class="relative h-48 group overflow-hidden border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
                              <img 
                                 v-if="paper.coverUrl" 
                                 :src="paper.coverUrl" 
                                 class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                style="background-color: var(--el-bg-color);" 
                                 loading="lazy"
                             />
-                            <div v-else class="w-full h-full flex items-center justify-center" style="background-color: var(--el-fill-color-extra-light); color: var(--el-text-color-placeholder);">
+                            <div v-else class="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-600">
                                 <div class="i-ep-document text-6xl" />
                             </div>
                             <!-- Overlay -->
-                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300" />
                         </div>
 
-                        <div class="p-4 flex flex-col">
-                            <!-- Tags -->
-                            <div class="flex flex-wrap gap-1 mb-3">
-                                <el-tag 
-                                    v-for="tag in (paper.keywords ? paper.keywords.split(' ') : [])" 
-                                    :key="tag" 
-                                    size="small" 
-                                    effect="plain"
-                                    class="!border-none !bg-indigo-50 !text-indigo-500 dark:!bg-indigo-900/30 dark:!text-indigo-300"
-                                >
-                                    {{ tag }}
-                                </el-tag>
+                        <div class="p-4 flex-1 flex flex-col">
+                            <h3 class="font-bold text-lg mb-2 line-clamp-2 text-gray-800 dark:text-gray-100" :title="paper.title">{{ paper.title }}</h3>
+                            <div class="text-xs text-gray-500 mb-3 flex items-center gap-1">
+                                <el-icon><User /></el-icon>
+                                <span class="truncate">{{ paper.authors || $t('common.unknown') }}</span>
                             </div>
-
-                            <p class="text-sm line-clamp-3 h-15" style="color: var(--el-text-color-regular);">
+                            <div class="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-4 flex-1">
                                 {{ paper.abstractInfo || $t('paperSquare.noAbstract') }}
-                            </p>
-                        </div>
-
-                        <template #footer>
-                            <div class="flex justify-between items-center text-xs" style="color: var(--el-text-color-secondary);">
-                                <span>{{ formatTime(paper.createTime) }}</span>
-                                <el-button type="primary" link size="small" class="!px-0" @click.stop="goToDetail(paper.id)">
-                                    {{ $t('common.viewDetail') }} <el-icon class="ml-1"><ArrowRight /></el-icon>
-                                </el-button>
                             </div>
-                        </template>
+                            <div class="flex flex-wrap gap-2 mt-auto">
+                                <span v-for="keyword in (paper.keywords ? paper.keywords.split(' ').slice(0, 3) : [])" :key="keyword" class="px-2 py-1 text-xs rounded-md bg-[var(--el-color-primary-light-9)] text-[var(--el-color-primary)]">
+                                    {{ keyword }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="px-4 py-3 border-t border-gray-50 dark:border-gray-800 flex justify-between items-center text-xs text-gray-400 bg-gray-50/50 dark:bg-gray-800/50">
+                            <span>{{ formatTime(paper.createTime) }}</span>
+                            <div class="flex items-center gap-1 text-[var(--el-color-primary)] opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span>{{ $t('paperSquare.viewDetail') }}</span>
+                                <el-icon><ArrowRight /></el-icon>
+                            </div>
+                        </div>
                     </el-card>
                 </el-col>
-            </el-row>
+             </el-row>
+             
+             <el-empty v-if="!loading && papers.length === 0" :description="$t('paperSquare.noPapers')" />
 
-            <div v-else-if="!loading" class="h-64 flex flex-col items-center justify-center text-gray-400">
-                <div class="i-ep-box text-6xl mb-4" />
-                <p>{{ $t('paperSquare.noPapers') }}</p>
-            </div>
-        </div>
-
-        <div class="flex justify-center mt-4 pt-2 border-t border-gray-100 dark:border-gray-800">
-            <el-pagination
-                v-model:current-page="currentPage"
-                v-model:page-size="pageSize"
-                :total="total"
-                layout="prev, pager, next"
-                background
-                @current-change="handlePageChange"
-            />
+             <div class="flex justify-center mt-4 pb-4">
+                 <el-pagination
+                    v-if="total > 0"
+                    v-model:current-page="currentPage"
+                    v-model:page-size="pageSize"
+                    :total="total"
+                    layout="prev, pager, next"
+                    background
+                    @current-change="handlePageChange"
+                 />
+             </div>
         </div>
     </div>
 </template>
