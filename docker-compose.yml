@@ -1,0 +1,122 @@
+version: "3.8"
+
+services:
+  frontend:
+    build: ./frontend
+    container_name: paper-insight-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - paper-network
+    restart: always
+
+  backend:
+    build: .
+    container_name: paper-insight-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      # Override Database Configuration
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/paper_insight?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=123456
+      # Override Redis Configuration
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+      # Override RabbitMQ Configuration
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=${RABBITMQ_DEFAULT_USER}
+      - SPRING_RABBITMQ_PASSWORD=${RABBITMQ_DEFAULT_PASS}
+      # Override Elasticsearch Configuration
+      - SPRING_ELASTICSEARCH_URIS=http://elasticsearch:9200
+      # Sensitive Configuration (From .env)
+      - SPRING_MAIL_USERNAME=${MAIL_USERNAME}
+      - SPRING_MAIL_PASSWORD=${MAIL_PASSWORD}
+      - COS_CLIENT_SECRETID=${COS_SECRET_ID}
+      - COS_CLIENT_SECRETKEY=${COS_SECRET_KEY}
+      - COS_CLIENT_BUCKET=${COS_BUCKET}
+      - COS_CLIENT_REGION=${COS_REGION}
+      - AGENT_AGENTS_DASHSCOPE_API_KEY=${DASHSCOPE_API_KEY}
+      - AGENT_AGENTS_COMMON_API_KEY=${DASHSCOPE_API_KEY}
+      - AGENT_AGENTS_MEM0_API_KEY=${MEM0_API_KEY}
+      - EASYSCHOLAR_SECRET_KEY=${EASYSCHOLAR_SECRET_KEY}
+    depends_on:
+      - mysql
+      - redis
+      - rabbitmq
+      - elasticsearch
+    networks:
+      - paper-network
+    restart: always
+
+  mysql:
+    image: mysql:8.0
+    container_name: paper-insight-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+    volumes:
+      - ./sql/paper_insight_backup_20260129.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql_data:/var/lib/mysql
+    networks:
+      - paper-network
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+
+  redis:
+    image: redis:7.0-alpine
+    container_name: paper-insight-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - paper-network
+    restart: always
+
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: paper-insight-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - paper-network
+    restart: always
+
+  elasticsearch:
+    image: elasticsearch:8.15.5
+    container_name: paper-insight-elasticsearch
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - paper-network
+    restart: always
+
+networks:
+  paper-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  redis_data:
+  rabbitmq_data:
+  elasticsearch_data:

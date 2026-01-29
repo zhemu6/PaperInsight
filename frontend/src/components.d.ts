@@ -8,6 +8,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AIFloatingMenu: typeof import('./components/PdfReader/AIFloatingMenu.vue')['default']
     BaseFooter: typeof import('./components/layouts/BaseFooter.vue')['default']
     BaseHeader: typeof import('./components/layouts/BaseHeader.vue')['default']
     BaseSide: typeof import('./components/layouts/BaseSide.vue')['default']
@@ -61,7 +62,7 @@ declare module 'vue' {
     MarkdownViewer: typeof import('./components/InsightPanel/MarkdownViewer.vue')['default']
     MessageBoxDemo: typeof import('./components/MessageBoxDemo.vue')['default']
     PaperUpload: typeof import('./components/file/PaperUpload.vue')['default']
-    PdfViewer: typeof import('./components/PdfViewer/index.vue')['default']
+    PdfViewer: typeof import('./components/PdfReader/PdfViewer.vue')['default']
     RadarChart: typeof import('./components/InsightPanel/RadarChart.vue')['default']
     RecycleBin: typeof import('./components/file/RecycleBin.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

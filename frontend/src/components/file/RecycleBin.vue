@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { listRecycleBin, restore, physicalDelete } from '~/api/recycleBinController'
 import { listFolderByPage } from '~/api/folderController'
+import { listRecycleBin, physicalDelete, restore } from '~/api/recycleBinController'
 
 const props = defineProps<{
   visible: boolean
@@ -17,28 +17,31 @@ const loading = ref(false)
 const list = ref<any[]>([])
 
 // 加载回收站 (只展示论文)
-const loadData = async () => {
+async function loadData() {
   loading.value = true
   try {
     const res = await listRecycleBin()
     // 后端返回的是 List<PaperVO>
     if (res.data) {
-       list.value = (res.data as any[]).map((item: any) => ({
+      list.value = (res.data as any[]).map((item: any) => ({
         ...item,
         type: 'paper',
-        displayName: item.title
+        displayName: item.title,
       }))
-    } else {
-        list.value = []
     }
-  } catch (error) {
+    else {
+      list.value = []
+    }
+  }
+  catch {
     // error handled globally
-  } finally {
+  }
+  finally {
     loading.value = false
   }
 }
 
-const handleClose = () => {
+function handleClose() {
   emit('update:visible', false)
   emit('close')
 }
@@ -50,81 +53,87 @@ const folderTree = ref<any[]>([])
 const currentRestoreRow = ref<any>(null)
 
 // 构建文件夹树
-const buildTree = (folders: any[]) => {
+function buildTree(folders: any[]) {
   const map = new Map<number, any>()
   const tree: any[] = []
-  
+
   // 1. Initialize map
-  folders.forEach(f => {
+  folders.forEach((f) => {
     map.set(f.id, { ...f, label: f.name, value: f.id, children: [] })
   })
 
   // 2. Build Hierarchy
-  folders.forEach(f => {
+  folders.forEach((f) => {
     const node = map.get(f.id)
     if (f.parentId && f.parentId !== 0) {
       const parent = map.get(f.parentId)
       if (parent) {
         parent.children.push(node)
-      } else {
+      }
+      else {
         // Parent not found (maybe filtered out or root?), treat as root for now?
         // Or just ignore if data consistency is guaranteed.
         // Let's treat as root if parent is missing to be safe
         tree.push(node)
       }
-    } else {
+    }
+    else {
       tree.push(node)
     }
   })
 
   return [
-      { 
-          label: t('file.manager.root'), 
-          value: 0, 
-          children: tree 
-      }
+    {
+      label: t('file.manager.root'),
+      value: 0,
+      children: tree,
+    },
   ]
 }
 
 // 还原 - 打开选择框
-const handleRestore = async (row: any) => {
+async function handleRestore(row: any) {
   currentRestoreRow.value = row
   targetFolderId.value = 0 // 默认根目录
   restoreDialogVisible.value = true
-  
+
   // 加载文件夹列表供选择
   try {
     const res = await listFolderByPage({ pageSize: 1000 })
     if (res.data && res.data.records) {
       folderTree.value = buildTree(res.data.records)
     }
-  } catch (e) {
+  }
+  catch {
     // ignore
   }
 }
 
 // 确认还原
-const confirmRestore = async () => {
-    if (!currentRestoreRow.value) return
-    restoreLoading.value = true
-    try {
-        await restore({ 
-            paperId: currentRestoreRow.value.id, 
-            folderId: targetFolderId.value 
-        })
-        ElMessage.success(t('file.recycleBin.actions.restoreSuccess'))
-        restoreDialogVisible.value = false
-        loadData()
-        emit('close') 
-    } catch(e) {
-        //
-    } finally {
-        restoreLoading.value = false
-    }
+async function confirmRestore() {
+  if (!currentRestoreRow.value)
+    return
+  restoreLoading.value = true
+  try {
+    await restore({
+      paperId: currentRestoreRow.value.id,
+      folderId: targetFolderId.value,
+    })
+    ElMessage.success(t('file.recycleBin.actions.restoreSuccess'))
+    restoreDialogVisible.value = false
+    loadData()
+    emit('close')
+  }
+  catch {
+    //
+  }
+  finally {
+    restoreLoading.value = false
+  }
 }
 
 // 彻底删除
-const handleDelete = (row: any) => {
+function handleDelete(row: any) {
   ElMessageBox.confirm(
     t('file.recycleBin.actions.confirmDeleteForever'),
     t('common.warning'),
@@ -132,14 +141,15 @@ const handleDelete = (row: any) => {
       confirmButtonText: t('common.confirm'),
       cancelButtonText: t('common.cancel'),
       type: 'warning',
-    }
+    },
   ).then(async () => {
     try {
       await physicalDelete({ paperId: row.id })
       ElMessage.success(t('file.recycleBin.actions.deleteForeverSuccess'))
       loadData()
-    } catch (error) {
-        //
+    }
+    catch {
+      //
     }
   })
 }
@@ -149,8 +159,9 @@ watch(() => props.visible, (newVal) => {
     loadData()
   }
 })
-const formatDate = (dateStr?: string) => {
-  if (!dateStr) return '-'
+function formatDate(dateStr?: string) {
+  if (!dateStr)
+    return '-'
   const date = new Date(dateStr)
   return date.toLocaleString('zh-CN', {
     year: 'numeric',
@@ -159,7 +170,7 @@ const formatDate = (dateStr?: string) => {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-    hour12: false
+    hour12: false,
   }).replace(/\//g, '-')
 }
 </script>
@@ -174,10 +185,10 @@ const formatDate = (dateStr?: string) => {
     <el-table v-loading="loading" :data="list" height="400">
       <el-table-column :label="t('file.recycleBin.columns.name')" min-width="200">
         <template #default="{ row }">
-            <div class="flex items-center gap-2">
-                <div class="i-ep-document text-blue-400 text-xl" />
-                <span>{{ row.displayName }}</span>
-            </div>
+          <div class="flex items-center gap-2">
+            <div class="i-ep-document text-xl text-blue-400" />
+            <span>{{ row.displayName }}</span>
+          </div>
         </template>
       </el-table-column>
       <el-table-column :label="t('file.recycleBin.columns.deleteTime')" width="200">
@@ -187,8 +198,12 @@ const formatDate = (dateStr?: string) => {
       </el-table-column>
       <el-table-column :label="t('file.recycleBin.columns.operation')" width="200" align="right">
         <template #default="{ row }">
-          <el-button link type="primary" @click="handleRestore(row)">{{ t('file.recycleBin.actions.restore') }}</el-button>
-          <el-button link type="danger" @click="handleDelete(row)">{{ t('file.recycleBin.actions.deleteForever') }}</el-button>
+          <el-button link type="primary" @click="handleRestore(row)">
+            {{ t('file.recycleBin.actions.restore') }}
+          </el-button>
+          <el-button link type="danger" @click="handleDelete(row)">
+            {{ t('file.recycleBin.actions.deleteForever') }}
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -201,7 +216,7 @@ const formatDate = (dateStr?: string) => {
       append-to-body
     >
       <div class="mb-4">
-        <label class="block mb-2 text-sm text-gray-500">{{ t('file.recycleBin.dialog.targetFolder') }}</label>
+        <label class="mb-2 block text-sm text-gray-500">{{ t('file.recycleBin.dialog.targetFolder') }}</label>
         <el-tree-select
           v-model="targetFolderId"
           :data="folderTree"

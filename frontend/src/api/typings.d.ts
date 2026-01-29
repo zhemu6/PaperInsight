@@ -1,327 +1,327 @@
 declare namespace API {
-  type BaseResponseBoolean = {
-    code?: number;
-    data?: boolean;
-    message?: string;
-  };
+  interface BaseResponseBoolean {
+    code?: number
+    data?: boolean
+    message?: string
+  }
 
-  type BaseResponseListPaperVO = {
-    code?: number;
-    data?: PaperVO[];
-    message?: string;
-  };
+  interface BaseResponseListPaperVO {
+    code?: number
+    data?: PaperVO[]
+    message?: string
+  }
 
-  type BaseResponseLong = {
-    code?: number;
-    data?: number;
-    message?: string;
-  };
+  interface BaseResponseLong {
+    code?: number
+    data?: number
+    message?: string
+  }
 
-  type BaseResponseMapStringLong = {
-    code?: number;
-    data?: Record<string, any>;
-    message?: string;
-  };
+  interface BaseResponseMapStringLong {
+    code?: number
+    data?: Record<string, any>
+    message?: string
+  }
 
-  type BaseResponsePageFolderVO = {
-    code?: number;
-    data?: PageFolderVO;
-    message?: string;
-  };
+  interface BaseResponsePageFolderVO {
+    code?: number
+    data?: PageFolderVO
+    message?: string
+  }
 
-  type BaseResponsePagePaperVO = {
-    code?: number;
-    data?: PagePaperVO;
-    message?: string;
-  };
+  interface BaseResponsePagePaperVO {
+    code?: number
+    data?: PagePaperVO
+    message?: string
+  }
 
-  type BaseResponsePageSysUserVO = {
-    code?: number;
-    data?: PageSysUserVO;
-    message?: string;
-  };
+  interface BaseResponsePageSysUserVO {
+    code?: number
+    data?: PageSysUserVO
+    message?: string
+  }
 
-  type BaseResponsePaperDetailVO = {
-    code?: number;
-    data?: PaperDetailVO;
-    message?: string;
-  };
+  interface BaseResponsePaperDetailVO {
+    code?: number
+    data?: PaperDetailVO
+    message?: string
+  }
 
-  type BaseResponseString = {
-    code?: number;
-    data?: string;
-    message?: string;
-  };
+  interface BaseResponseString {
+    code?: number
+    data?: string
+    message?: string
+  }
 
-  type BaseResponseSysUser = {
-    code?: number;
-    data?: SysUser;
-    message?: string;
-  };
+  interface BaseResponseSysUser {
+    code?: number
+    data?: SysUser
+    message?: string
+  }
 
-  type BaseResponseSysUserVO = {
-    code?: number;
-    data?: SysUserVO;
-    message?: string;
-  };
+  interface BaseResponseSysUserVO {
+    code?: number
+    data?: SysUserVO
+    message?: string
+  }
 
-  type chatStreamParams = {
-    paperId: number;
-    question: string;
-  };
+  interface chatStreamParams {
+    paperId: number
+    question: string
+  }
 
-  type clearSessionParams = {
-    paperId: number;
-  };
+  interface clearSessionParams {
+    paperId: number
+  }
 
-  type DeleteRequest = {
-    id: number;
-  };
+  interface DeleteRequest {
+    id: number
+  }
 
-  type FolderAddRequest = {
-    name: string;
-    parentId?: number;
-  };
+  interface FolderAddRequest {
+    name: string
+    parentId?: number
+  }
 
-  type FolderQueryRequest = {
-    pageNum?: number;
-    pageSize?: number;
-    sortField?: string;
-    sortOrder?: string;
-    id?: number;
-    parentId?: number;
-    name?: string;
-  };
+  interface FolderQueryRequest {
+    pageNum?: number
+    pageSize?: number
+    sortField?: string
+    sortOrder?: string
+    id?: number
+    parentId?: number
+    name?: string
+  }
 
-  type FolderUpdateRequest = {
-    id: number;
-    name: string;
-  };
+  interface FolderUpdateRequest {
+    id: number
+    name: string
+  }
 
-  type FolderVO = {
-    id?: number;
-    name?: string;
-    parentId?: number;
-    userId?: number;
-    createTime?: string;
-    updateTime?: string;
-  };
+  interface FolderVO {
+    id?: number
+    name?: string
+    parentId?: number
+    userId?: number
+    createTime?: string
+    updateTime?: string
+  }
 
-  type getPaperDetailParams = {
-    id: number;
-  };
+  interface getPaperDetailParams {
+    id: number
+  }
 
-  type getUserByIdParams = {
-    id: number;
-  };
+  interface getUserByIdParams {
+    id: number
+  }
 
-  type getUserVOByIdParams = {
-    id: number;
-  };
+  interface getUserVOByIdParams {
+    id: number
+  }
 
-  type OrderItem = {
-    column?: string;
-    asc?: boolean;
-  };
+  interface OrderItem {
+    column?: string
+    asc?: boolean
+  }
 
-  type PageFolderVO = {
-    records?: FolderVO[];
-    total?: number;
-    size?: number;
-    current?: number;
-    orders?: OrderItem[];
-    optimizeCountSql?: PageFolderVO;
-    searchCount?: PageFolderVO;
-    optimizeJoinOfCountSql?: boolean;
-    maxLimit?: number;
-    countId?: string;
-    pages?: number;
-  };
+  interface PageFolderVO {
+    records?: FolderVO[]
+    total?: number
+    size?: number
+    current?: number
+    orders?: OrderItem[]
+    optimizeCountSql?: PageFolderVO
+    searchCount?: PageFolderVO
+    optimizeJoinOfCountSql?: boolean
+    maxLimit?: number
+    countId?: string
+    pages?: number
+  }
 
-  type PagePaperVO = {
-    records?: PaperVO[];
-    total?: number;
-    size?: number;
-    current?: number;
-    orders?: OrderItem[];
-    optimizeCountSql?: PagePaperVO;
-    searchCount?: PagePaperVO;
-    optimizeJoinOfCountSql?: boolean;
-    maxLimit?: number;
-    countId?: string;
-    pages?: number;
-  };
+  interface PagePaperVO {
+    records?: PaperVO[]
+    total?: number
+    size?: number
+    current?: number
+    orders?: OrderItem[]
+    optimizeCountSql?: PagePaperVO
+    searchCount?: PagePaperVO
+    optimizeJoinOfCountSql?: boolean
+    maxLimit?: number
+    countId?: string
+    pages?: number
+  }
 
-  type PageSysUserVO = {
-    records?: SysUserVO[];
-    total?: number;
-    size?: number;
-    current?: number;
-    orders?: OrderItem[];
-    optimizeCountSql?: PageSysUserVO;
-    searchCount?: PageSysUserVO;
-    optimizeJoinOfCountSql?: boolean;
-    maxLimit?: number;
-    countId?: string;
-    pages?: number;
-  };
+  interface PageSysUserVO {
+    records?: SysUserVO[]
+    total?: number
+    size?: number
+    current?: number
+    orders?: OrderItem[]
+    optimizeCountSql?: PageSysUserVO
+    searchCount?: PageSysUserVO
+    optimizeJoinOfCountSql?: boolean
+    maxLimit?: number
+    countId?: string
+    pages?: number
+  }
 
-  type PaperAddRequest = {
-    title: string;
-    authors?: string;
-    abstractInfo?: string;
-    keywords?: string;
-    cosUrl?: string;
-    coverUrl?: string;
-    folderId?: number;
-    isPublic?: number;
-    publishDate?: string;
-  };
+  interface PaperAddRequest {
+    title: string
+    authors?: string
+    abstractInfo?: string
+    keywords?: string
+    cosUrl?: string
+    coverUrl?: string
+    folderId?: number
+    isPublic?: number
+    publishDate?: string
+  }
 
-  type PaperDetailVO = {
-    paperInfo?: PaperVO;
-    paperInsight?: PaperInsightVO;
-  };
+  interface PaperDetailVO {
+    paperInfo?: PaperVO
+    paperInsight?: PaperInsightVO
+  }
 
-  type PaperInsightVO = {
-    summaryMarkdown?: string;
-    innovationPoints?: string;
-    methods?: string;
-    score?: number;
-    scoreDetails?: Record<string, any>;
-  };
+  interface PaperInsightVO {
+    summaryMarkdown?: string
+    innovationPoints?: string
+    methods?: string
+    score?: number
+    scoreDetails?: Record<string, any>
+  }
 
-  type PaperQueryRequest = {
-    pageNum?: number;
-    pageSize?: number;
-    sortField?: string;
-    sortOrder?: string;
-    id?: number;
-    folderId?: number;
-    title?: string;
-    keywords?: string;
-    authors?: string;
-    abstractInfo?: string;
-  };
+  interface PaperQueryRequest {
+    pageNum?: number
+    pageSize?: number
+    sortField?: string
+    sortOrder?: string
+    id?: number
+    folderId?: number
+    title?: string
+    keywords?: string
+    authors?: string
+    abstractInfo?: string
+  }
 
-  type PaperUpdateRequest = {
-    id: number;
-    title?: string;
-    authors?: string;
-    abstractInfo?: string;
-    coverUrl?: string;
-    folderId?: number;
-    isPublic?: number;
-    publishDate?: string;
-  };
+  interface PaperUpdateRequest {
+    id: number
+    title?: string
+    authors?: string
+    abstractInfo?: string
+    coverUrl?: string
+    folderId?: number
+    isPublic?: number
+    publishDate?: string
+  }
 
-  type PaperVO = {
-    id?: number;
-    title?: string;
-    authors?: string;
-    abstractInfo?: string;
-    keywords?: string;
-    cosUrl?: string;
-    coverUrl?: string;
-    folderId?: number;
-    userId?: number;
-    isPublic?: number;
-    publishDate?: string;
-    createTime?: string;
-    updateTime?: string;
-  };
+  interface PaperVO {
+    id?: number
+    title?: string
+    authors?: string
+    abstractInfo?: string
+    keywords?: string
+    cosUrl?: string
+    coverUrl?: string
+    folderId?: number
+    userId?: number
+    isPublic?: number
+    publishDate?: string
+    createTime?: string
+    updateTime?: string
+  }
 
-  type RecycleRequest = {
-    paperId: number;
-    folderId?: number;
-  };
+  interface RecycleRequest {
+    paperId: number
+    folderId?: number
+  }
 
-  type sendCodeParams = {
-    email: string;
-  };
+  interface sendCodeParams {
+    email: string
+  }
 
-  type ServerSentEventString = true;
+  type ServerSentEventString = true
 
-  type SysUser = {
-    id?: number;
-    userAccount?: string;
-    userPassword?: string;
-    userName?: string;
-    userAvatar?: string;
-    userProfile?: string;
-    userRole?: string;
-    userStatus?: number;
-    email?: string;
-    createTime?: string;
-    updateTime?: string;
-    isDelete?: number;
-  };
+  interface SysUser {
+    id?: number
+    userAccount?: string
+    userPassword?: string
+    userName?: string
+    userAvatar?: string
+    userProfile?: string
+    userRole?: string
+    userStatus?: number
+    email?: string
+    createTime?: string
+    updateTime?: string
+    isDelete?: number
+  }
 
-  type SysUserLoginRequest = {
-    userAccount?: string;
-    userPassword?: string;
-    email?: string;
-    code?: string;
-    type: string;
-  };
+  interface SysUserLoginRequest {
+    userAccount?: string
+    userPassword?: string
+    email?: string
+    code?: string
+    type: string
+  }
 
-  type SysUserPasswordResetRequest = {
-    email: string;
-    code: string;
-    newPassword: string;
-    checkPassword: string;
-  };
+  interface SysUserPasswordResetRequest {
+    email: string
+    code: string
+    newPassword: string
+    checkPassword: string
+  }
 
-  type SysUserQueryRequest = {
-    pageNum?: number;
-    pageSize?: number;
-    sortField?: string;
-    sortOrder?: string;
-    id?: number;
-    userName?: string;
-    userAccount?: string;
-    userProfile?: string;
-    userRole?: string;
-    userStatus?: number;
-  };
+  interface SysUserQueryRequest {
+    pageNum?: number
+    pageSize?: number
+    sortField?: string
+    sortOrder?: string
+    id?: number
+    userName?: string
+    userAccount?: string
+    userProfile?: string
+    userRole?: string
+    userStatus?: number
+  }
 
-  type SysUserRegisterRequest = {
-    userAccount: string;
-    userPassword: string;
-    email: string;
-    checkPassword: string;
-    code: string;
-  };
+  interface SysUserRegisterRequest {
+    userAccount: string
+    userPassword: string
+    email: string
+    checkPassword: string
+    code: string
+  }
 
-  type SysUserUpdateEmailRequest = {
-    newEmail: string;
-    code: string;
-  };
+  interface SysUserUpdateEmailRequest {
+    newEmail: string
+    code: string
+  }
 
-  type SysUserUpdatePasswordRequest = {
-    oldPassword: string;
-    newPassword: string;
-    checkPassword: string;
-  };
+  interface SysUserUpdatePasswordRequest {
+    oldPassword: string
+    newPassword: string
+    checkPassword: string
+  }
 
-  type SysUserUpdateRequest = {
-    id: number;
-    userName?: string;
-    email?: string;
-    userAvatar?: string;
-    userProfile?: string;
-    userRole?: string;
-    userStatus?: number;
-  };
+  interface SysUserUpdateRequest {
+    id: number
+    userName?: string
+    email?: string
+    userAvatar?: string
+    userProfile?: string
+    userRole?: string
+    userStatus?: number
+  }
 
-  type SysUserVO = {
-    id?: number;
-    userAccount?: string;
-    userPassword?: string;
-    userName?: string;
-    userAvatar?: string;
-    userProfile?: string;
-    userRole?: string;
-    email?: string;
-  };
+  interface SysUserVO {
+    id?: number
+    userAccount?: string
+    userPassword?: string
+    userName?: string
+    userAvatar?: string
+    userProfile?: string
+    userRole?: string
+    email?: string
+  }
 }

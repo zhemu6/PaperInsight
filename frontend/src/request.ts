@@ -1,3 +1,4 @@
+import type { AxiosRequestConfig } from 'axios'
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import { i18n } from '~/i18n'
@@ -29,8 +30,8 @@ myAxios.interceptors.response.use(
     // 未登录
     if (data.code === 40100) {
       if (
-        !response.request.responseURL.includes('user/get/login') &&
-        !window.location.pathname.includes('/common/login')
+        !response.request.responseURL.includes('user/get/login')
+        && !window.location.pathname.includes('/common/login')
       ) {
         ElMessage.warning(i18n.global.t('error.unauthorized'))
         // 只保存路径和查询参数，避免完整 URL 过长
@@ -55,5 +56,20 @@ myAxios.interceptors.response.use(
     return Promise.reject(error)
   },
 )
+
+// Add a type declaration to override the return type
+declare module 'axios' {
+  interface AxiosInstance {
+    <T = any>(config: AxiosRequestConfig): Promise<T>
+    <T = any>(url: string, config?: AxiosRequestConfig): Promise<T>
+    request: <T = any>(config: AxiosRequestConfig) => Promise<T>
+    get: <T = any>(url: string, config?: AxiosRequestConfig) => Promise<T>
+    delete: <T = any>(url: string, config?: AxiosRequestConfig) => Promise<T>
+    head: <T = any>(url: string, config?: AxiosRequestConfig) => Promise<T>
+    post: <T = any>(url: string, data?: any, config?: AxiosRequestConfig) => Promise<T>
+    put: <T = any>(url: string, data?: any, config?: AxiosRequestConfig) => Promise<T>
+    patch: <T = any>(url: string, data?: any, config?: AxiosRequestConfig) => Promise<T>
+  }
+}
 
 export default myAxios

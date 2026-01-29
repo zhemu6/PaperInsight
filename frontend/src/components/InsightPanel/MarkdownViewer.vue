@@ -106,4 +106,16 @@ onUpdated(() => {
 :deep(.markdown-body pre) {
   background-color: var(--el-fill-color-light);
 }
+
+/* 修复列表在 ChatPanel 中被裁切的问题 */
+:deep(.markdown-body ul),
+:deep(.markdown-body ol) {
+  padding-left: 1.5em; /* 确保有足够空间显示标记 */
+  list-style-position: outside;
+  margin-bottom: 1em;
+}
+
+:deep(.markdown-body li) {
+  margin-top: 0.25em;
+}
 </style>

@@ -1,13 +1,13 @@
 <script lang="ts" setup>
-import { computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import { toggleDark } from '~/composables'
-import { useUserStore } from '~/stores/user'
-import { toggleLocale, getLocale } from '~/i18n'
+import { SwitchButton, User, UserFilled } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { UserFilled, SwitchButton, User } from '@element-plus/icons-vue'
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import logo from '~/assets/logo.svg'
+import { toggleDark } from '~/composables'
+import { getLocale, toggleLocale } from '~/i18n'
+import { useUserStore } from '~/stores/user'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -16,7 +16,7 @@ const { t } = useI18n()
 const loginUser = computed(() => userStore.loginUser)
 const currentLocale = computed(() => getLocale())
 
-const handleCommand = (command: string) => {
+function handleCommand(command: string) {
   if (command === 'profile') {
     router.push('/user/profile')
   }
@@ -25,7 +25,7 @@ const handleCommand = (command: string) => {
   }
 }
 
-const handleLogout = async () => {
+async function handleLogout() {
   try {
     await ElMessageBox.confirm(t('user.logoutConfirm') || '确定要退出登录吗？', t('common.warning'), {
       confirmButtonText: t('common.confirm'),
@@ -51,14 +51,14 @@ function handleToggleLocale() {
 <template>
   <el-menu class="el-menu-demo flex items-center px-4" mode="horizontal" :ellipsis="false">
     <!-- Logo Area -->
-    <div class="flex items-center gap-2 mr-auto cursor-pointer" @click="router.push('/')">
+    <div class="mr-auto flex cursor-pointer items-center gap-2" @click="router.push('/')">
       <img :src="logo" alt="PaperInsight Logo" class="h-8 w-8">
-      <span class="font-bold text-lg hidden sm:block">PaperInsight</span>
+      <span class="hidden text-lg font-bold sm:block">PaperInsight</span>
     </div>
 
     <!-- Language Toggle -->
     <button
-      class="border-none bg-transparent cursor-pointer flex items-center justify-center p-2 mr-2 hover:bg-[var(--el-fill-color)] rounded-full transition-colors"
+      class="mr-2 flex cursor-pointer items-center justify-center rounded-full border-none bg-transparent p-2 transition-colors hover:bg-[var(--el-fill-color)]"
       :title="$t('common.language')"
       @click="handleToggleLocale"
     >
@@ -67,16 +67,16 @@ function handleToggleLocale() {
 
     <!-- Theme Toggle -->
     <button
-      class="border-none bg-transparent cursor-pointer flex items-center justify-center p-2 mr-4 hover:bg-[var(--el-fill-color)] rounded-full transition-colors"
+      class="mr-4 flex cursor-pointer items-center justify-center rounded-full border-none bg-transparent p-2 transition-colors hover:bg-[var(--el-fill-color)]"
       :title="$t('common.language') === 'Language' ? 'Toggle Theme' : '切换主题'"
       @click="toggleDark()"
     >
-      <i class="inline-flex text-xl i-ep-sunny dark:i-ep-moon" />
+      <i class="i-ep-sunny dark:i-ep-moon inline-flex text-xl" />
     </button>
 
     <!-- User Profile Dropdown -->
     <el-dropdown trigger="click" @command="handleCommand">
-      <div class="flex items-center gap-2 cursor-pointer outline-none hover:opacity-80 transition-opacity">
+      <div class="flex cursor-pointer items-center gap-2 outline-none transition-opacity hover:opacity-80">
         <el-avatar
           :size="32"
           :src="loginUser.userAvatar"
@@ -102,7 +102,7 @@ function handleToggleLocale() {
 
 <style lang="scss" scoped>
 .el-menu-demo {
-    border-bottom: none;
-    height: 100%;
+  border-bottom: none;
+  height: 100%;
 }
 </style>

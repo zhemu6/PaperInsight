@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
 import dayjs from 'dayjs'
-import { 
-  addFolder, 
-  deleteFolder, 
-  updateFolder, 
-  listFolderByPage 
-} from '~/api/folderController'
-import { listPaperByPage, deletePaper, updatePaper } from '~/api/paperController'
-import RecycleBin from './RecycleBin.vue'
-import PaperUpload from './PaperUpload.vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import {
+  addFolder,
+  deleteFolder,
+  listFolderByPage,
+  updateFolder,
+} from '~/api/folderController'
+import { deletePaper, listPaperByPage, updatePaper } from '~/api/paperController'
+import PaperUpload from './PaperUpload.vue'
+import RecycleBin from './RecycleBin.vue'
 
 const { t } = useI18n()
 
@@ -45,7 +45,7 @@ const form = reactive({
 })
 
 // 加载文件列表
-const loadFiles = async () => {
+async function loadFiles() {
   loading.value = true
   try {
     // 1. 获取文件夹
@@ -53,16 +53,16 @@ const loadFiles = async () => {
       parentId: currentParentId.value,
       name: searchText.value,
       pageSize: 100, // 暂时不分页，查多一点
-      current: 1
+      pageNum: 1,
     })
-    
+
     // 注意：后端返回的是 Page<FolderVO>，这里通过 .data 获取
     // 如果后端 Response 结构是 { code: 0, data: { records: [...] } }
     const folders: FileItem[] = (folderRes.data?.records || []).map((item: any) => ({
       id: item.id,
       name: item.name,
       type: 'folder',
-      updateTime: item.updateTime
+      updateTime: item.updateTime,
     }))
 
     // 2. 获取论文
@@ -70,9 +70,9 @@ const loadFiles = async () => {
       folderId: currentParentId.value,
       title: searchText.value,
       pageSize: 100,
-      current: 1
+      pageNum: 1,
     })
-    
+
     const papers: FileItem[] = (paperRes.data?.records || []).map((item: any) => ({
       id: item.id,
       name: item.title,
@@ -83,19 +83,21 @@ const loadFiles = async () => {
       keywords: item.keywords,
       abstractInfo: item.abstractInfo,
       isPublic: item.isPublic,
-      folderId: item.folderId
+      folderId: item.folderId,
     }))
 
     fileList.value = [...folders, ...papers]
-  } catch (error: any) {
+  }
+  catch {
     ElMessage.error(t('file.manager.actions.loadFailed'))
-  } finally {
+  }
+  finally {
     loading.value = false
   }
 }
 
 // 进入文件夹
-const handleEnterFolder = (row: FileItem) => {
+function handleEnterFolder(row: FileItem) {
   if (row.type === 'folder') {
     currentParentId.value = row.id
     breadcrumbs.value.push({ id: row.id, name: row.name })
@@ -104,21 +106,21 @@ const handleEnterFolder = (row: FileItem) => {
 }
 
 // 面包屑导航
-const handleBreadcrumbClick = (item: BreadcrumbItem, index: number) => {
+function handleBreadcrumbClick(item: BreadcrumbItem, index: number) {
   currentParentId.value = item.id
   breadcrumbs.value = breadcrumbs.value.slice(0, index + 1)
   loadFiles()
 }
 
 // 新建文件夹
-const handleCreateFolder = () => {
+function handleCreateFolder() {
   dialogType.value = 'add'
   form.name = ''
   dialogVisible.value = true
 }
 
 // 重命名
-const handleRename = (row: FileItem) => {
+function handleRename(row: FileItem) {
   dialogType.value = 'rename'
   form.id = row.id
   form.name = row.name
@@ -126,25 +128,28 @@ const handleRename = (row: FileItem) => {
 }
 
 // 提交表单 (文件夹)
-const handleSubmit = async () => {
-  if (!form.name) return ElMessage.warning(t('file.manager.actions.inputName'))
-  
+async function handleSubmit() {
+  if (!form.name)
+    return ElMessage.warning(t('file.manager.actions.inputName'))
+
   try {
     if (dialogType.value === 'add') {
       await addFolder({
         name: form.name,
-        parentId: currentParentId.value
+        parentId: currentParentId.value,
       })
-    } else {
+    }
+    else {
       await updateFolder({
         id: form.id,
-        name: form.name
+        name: form.name,
       })
     }
     ElMessage.success(dialogType.value === 'add' ? t('file.manager.actions.createSuccess') : t('file.manager.actions.renameSuccess'))
     dialogVisible.value = false
     loadFiles()
-  } catch (error: any) {
+  }
+  catch {
     // 错误在 request.ts 已统一提示，这里无需处理，或处理特定逻辑
   }
 }
@@ -158,14 +163,14 @@ const editForm = reactive({
   keywords: '',
   abstractInfo: '',
   isPublic: 0,
-  folderId: 0
+  folderId: 0,
 })
 
-const handleEditPaper = (row: any) => {
+function handleEditPaper(row: any) {
   editPaperVisible.value = true
   // 初始化表单
   editForm.id = row.id
-  editForm.title = row.name 
+  editForm.title = row.name
   editForm.authors = row.authors || ''
   editForm.keywords = row.keywords || ''
   editForm.abstractInfo = row.abstractInfo || ''
@@ -173,7 +178,7 @@ const handleEditPaper = (row: any) => {
   editForm.folderId = row.folderId || currentParentId.value
 }
 
-const handlePaperSubmit = async () => {
+async function handlePaperSubmit() {
   try {
     await updatePaper({
       id: editForm.id,
@@ -182,18 +187,19 @@ const handlePaperSubmit = async () => {
       keywords: editForm.keywords,
       abstractInfo: editForm.abstractInfo,
       isPublic: editForm.isPublic,
-      folderId: editForm.folderId
-    })
+      folderId: editForm.folderId,
+    } as any)
     ElMessage.success(t('user.profileInfo.saveSuccess'))
     editPaperVisible.value = false
     loadFiles()
-  } catch (error) {
+  }
+  catch {
     //
   }
 }
 
 // 删除
-const handleDelete = (row: FileItem) => {
+function handleDelete(row: FileItem) {
   ElMessageBox.confirm(
     t('file.manager.actions.confirmDelete'),
     t('common.warning'),
@@ -201,35 +207,37 @@ const handleDelete = (row: FileItem) => {
       confirmButtonText: t('file.manager.dialog.confirm'),
       cancelButtonText: t('file.manager.dialog.cancel'),
       type: 'warning',
-    }
+    },
   )
     .then(async () => {
       try {
         if (row.type === 'folder') {
-            await deleteFolder({ id: row.id })
-        } else {
-            await deletePaper({ id: row.id })
+          await deleteFolder({ id: row.id })
+        }
+        else {
+          await deletePaper({ id: row.id })
         }
         ElMessage.success(t('file.manager.actions.deleteSuccess'))
         loadFiles()
-      } catch (e: any) {
+      }
+      catch (e: any) {
         // 捕获 BusinessException, 如果是 FolderNotEmpty
-        if (e.message?.includes("FolderNotEmpty") || e.code === 40101 || e.code === 50001) { 
-           ElMessageBox.confirm(
-             t('file.manager.actions.folderNotEmpty'),
-             t('file.manager.actions.recursiveDelete'),
-             {
-               confirmButtonText: t('file.manager.dialog.confirm'),
-               cancelButtonText: t('file.manager.dialog.cancel'),
-               type: 'warning',
-             }
-           ).then(async () => {
-               await deleteFolder({ id: row.id }, { params: { recursive: true } })
-               ElMessage.success(t('file.manager.actions.recursionSuccess'))
-               loadFiles()
-           }).catch(() => {
-               ElMessage.info(t('file.manager.actions.cancelDelete'))
-           })
+        if (e.message?.includes('FolderNotEmpty') || e.code === 40101 || e.code === 50001) {
+          ElMessageBox.confirm(
+            t('file.manager.actions.folderNotEmpty'),
+            t('file.manager.actions.recursiveDelete'),
+            {
+              confirmButtonText: t('file.manager.dialog.confirm'),
+              cancelButtonText: t('file.manager.dialog.cancel'),
+              type: 'warning',
+            },
+          ).then(async () => {
+            await deleteFolder({ id: row.id }, { params: { recursive: true } })
+            ElMessage.success(t('file.manager.actions.recursionSuccess'))
+            loadFiles()
+          }).catch(() => {
+            ElMessage.info(t('file.manager.actions.cancelDelete'))
+          })
         }
       }
     })
@@ -246,7 +254,7 @@ onMounted(() => {
 <template>
   <div class="h-full flex flex-col">
     <!-- 顶部工具栏 -->
-    <div class="mb-4 flex justify-between items-center w-full">
+    <div class="mb-4 w-full flex items-center justify-between">
       <div class="flex items-center gap-4">
         <el-button type="primary" class="!rounded-md" @click="handleCreateFolder">
           <div class="i-ep-folder-add mr-1" /> {{ t('file.manager.newFolder') }}
@@ -260,29 +268,29 @@ onMounted(() => {
       </div>
       <!-- 搜索框 -->
       <div class="flex items-center gap-2">
-        <el-input 
+        <el-input
           v-model="searchText"
-          :placeholder="t('file.manager.searchPlaceholder')" 
+          :placeholder="t('file.manager.searchPlaceholder')"
           style="width: 200px"
-          @keyup.enter="loadFiles"
           clearable
+          @keyup.enter="loadFiles"
           @clear="loadFiles"
         >
           <template #prefix>
             <div class="i-ep-search" />
           </template>
         </el-input>
-        <el-button class="!rounded-md" @click="loadFiles" plain :title="t('file.manager.refresh')">
-            <div class="i-ep-refresh" />
+        <el-button class="!rounded-md" plain :title="t('file.manager.refresh')" @click="loadFiles">
+          <div class="i-ep-refresh" />
         </el-button>
       </div>
     </div>
 
     <!-- 面包屑 -->
-    <div class="mb-4 px-2 py-1 bg-white dark:bg-dark-800 rounded border border-gray-200 dark:border-gray-700">
+    <div class="mb-4 border border-gray-200 rounded bg-white px-2 py-1 dark:border-gray-700 dark:bg-dark-800">
       <el-breadcrumb separator="/">
-        <el-breadcrumb-item 
-          v-for="(item, index) in breadcrumbs" 
+        <el-breadcrumb-item
+          v-for="(item, index) in breadcrumbs"
           :key="item.id"
           class="cursor-pointer hover:text-blue-500"
           @click="handleBreadcrumbClick(item, index)"
@@ -293,18 +301,18 @@ onMounted(() => {
     </div>
 
     <!-- 文件列表 -->
-    <el-table 
+    <el-table
       v-loading="loading"
-      :data="fileList" 
-      style="width: 100%" 
+      :data="fileList"
+      style="width: 100%"
       class="flex-1"
       @row-click="handleEnterFolder"
     >
       <el-table-column :label="t('file.manager.columns.name')" min-width="300">
         <template #default="{ row }">
-          <div class="flex items-center gap-2 cursor-pointer">
-            <div 
-              :class="row.type === 'folder' ? 'i-ep-folder text-yellow-400 text-xl' : 'i-ep-document text-blue-400 text-xl'" 
+          <div class="flex cursor-pointer items-center gap-2">
+            <div
+              :class="row.type === 'folder' ? 'i-ep-folder text-yellow-400 text-xl' : 'i-ep-document text-blue-400 text-xl'"
             />
             <span class="font-medium hover:text-blue-500 hover:underline">{{ row.name }}</span>
           </div>
@@ -318,9 +326,15 @@ onMounted(() => {
       <el-table-column :label="t('file.manager.columns.operation')" width="150" align="right">
         <template #default="{ row }">
           <div class="flex justify-end gap-2" @click.stop>
-            <el-button v-if="row.type === 'folder'" link type="primary" @click="handleRename(row)">{{ t('file.manager.actions.rename') }}</el-button>
-            <el-button v-else link type="primary" @click="handleEditPaper(row)">{{ t('file.manager.actions.edit') }}</el-button>
-            <el-button link type="danger" @click="handleDelete(row)">{{ t('file.manager.actions.delete') }}</el-button>
+            <el-button v-if="row.type === 'folder'" link type="primary" @click="handleRename(row)">
+              {{ t('file.manager.actions.rename') }}
+            </el-button>
+            <el-button v-else link type="primary" @click="handleEditPaper(row)">
+              {{ t('file.manager.actions.edit') }}
+            </el-button>
+            <el-button link type="danger" @click="handleDelete(row)">
+              {{ t('file.manager.actions.delete') }}
+            </el-button>
           </div>
         </template>
       </el-table-column>
@@ -363,13 +377,13 @@ onMounted(() => {
           <el-input v-model="editForm.abstractInfo" type="textarea" :rows="4" />
         </el-form-item>
         <el-form-item :label="t('file.manager.edit.public')">
-           <el-switch 
-              v-model="editForm.isPublic" 
-              :active-value="1" 
-              :inactive-value="0"
-              :active-text="t('file.manager.edit.publicYes')"
-              :inactive-text="t('file.manager.edit.publicNo')"
-            />
+          <el-switch
+            v-model="editForm.isPublic"
+            :active-value="1"
+            :inactive-value="0"
+            :active-text="t('file.manager.edit.publicYes')"
+            :inactive-text="t('file.manager.edit.publicNo')"
+          />
         </el-form-item>
       </el-form>
       <template #footer>

@@ -27,6 +27,10 @@ export default {
     viewDetail: '查看详情',
     more: '更多',
     unknown: '未知',
+    page: '页面',
+    explain: '解释',
+    translate: '翻译',
+    reference: '参考文献',
   },
   nav: {
     home: '首页',
@@ -365,8 +369,8 @@ export default {
     enterPassword: '请输入密码',
     profileMenu: {
       profile: '个人信息',
-      security: '安全设置', 
-      preference: '偏好设置'
+      security: '安全设置',
+      preference: '偏好设置',
     },
     profileInfo: {
       editTitle: '设置',
@@ -390,7 +394,7 @@ export default {
       uploadSizeError: '图片大小不能超过 10MB!',
       uploadSuccess: '头像上传成功',
       uploadError: '上传失败: ',
-      uploadErrorGeneric: '上传出错'
+      uploadErrorGeneric: '上传出错',
     },
     security: {
       title: '账户安全',
@@ -416,7 +420,7 @@ export default {
         sendError: '发送失败',
         incomplete: '请填写完整信息',
         success: '邮箱修改成功',
-        updateError: '修改失败'
+        updateError: '修改失败',
       },
       password: {
         label: '登录密码',
@@ -436,13 +440,13 @@ export default {
         mismatch: '两次输入的新密码不一致',
         lengthWarning: '建议密码长度不少于8位',
         success: '密码修改成功，请重新登录',
-        updateError: '修改失败'
+        updateError: '修改失败',
       },
-      back: '返回设置'
+      back: '返回设置',
     },
     preference: {
-      developing: '偏好设置功能开发中...'
-    }
+      developing: '偏好设置功能开发中...',
+    },
   },
   validation: {
     required: '此项为必填项',

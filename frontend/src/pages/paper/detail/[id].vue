@@ -6,11 +6,12 @@ import { useRoute } from 'vue-router'
 import { getPaperDetail } from '~/api/paperController'
 import MarkdownViewer from '~/components/InsightPanel/MarkdownViewer.vue'
 import ScoreRadarChart from '~/components/InsightPanel/RadarChart.vue'
-import PdfViewer from '~/components/PdfViewer/index.vue'
+import AIFloatingMenu from '~/components/PdfReader/AIFloatingMenu.vue'
+import PdfReader from '~/components/PdfReader/PdfViewer.vue'
 
 const { t } = useI18n()
 const route = useRoute()
-const paperId = route.params.id as string
+const paperId = (route.params as any).id as string
 
 const loading = ref(true)
 const detail = ref<API.PaperDetailVO | null>(null)
@@ -41,6 +42,31 @@ const scoreData = computed(() => {
   return details?.dimensions || {}
 })
 
+const menuVisible = ref(false)
+const menuX = ref(0)
+const menuY = ref(0)
+const selectedText = ref('')
+const floatingMenuRef = ref<any>(null)
+
+function handleTextSelect(data: { text: string, x: number, y: number }) {
+  selectedText.value = data.text
+  menuX.value = data.x
+  menuY.value = data.y
+  menuVisible.value = true
+}
+
+function handleClearSelect() {
+  menuVisible.value = false
+}
+
+const chatContext = ref('')
+
+function handleAIAction(action: string, text: string) {
+  activeTab.value = 'chat'
+  chatContext.value = text
+  menuVisible.value = false
+}
+
 onMounted(() => {
   fetchData()
 })
@@ -51,11 +77,26 @@ onMounted(() => {
     <!-- Left Panel: PDF Viewer (50%) -->
     <div class="relative flex flex-shrink-0 flex-col border-r border-gray-200 dark:border-gray-700" style="width: 50%">
       <div v-if="detail?.paperInfo?.cosUrl" class="h-full">
-        <PdfViewer :url="detail.paperInfo.cosUrl" />
+        <PdfReader
+          :url="detail.paperInfo.cosUrl"
+          @text-select="handleTextSelect"
+          @clear-select="handleClearSelect"
+        />
       </div>
       <div v-else class="h-full flex items-center justify-center text-gray-400">
         {{ t('paperDetail.noPdf') }}
       </div>
+
+      <!-- AI 浮动菜单 -->
+      <AIFloatingMenu
+        ref="floatingMenuRef"
+        :visible="menuVisible"
+        :x="menuX"
+        :y="menuY"
+        :text="selectedText"
+        @close="menuVisible = false"
+        @action="handleAIAction"
+      />
     </div>
 
     <!-- Right Panel: Insight Dashboard (50%) -->
@@ -126,7 +167,7 @@ onMounted(() => {
           </el-tab-pane>
           <el-tab-pane :label="t('paperDetail.tabs.chat')" name="chat" class="h-full">
             <div class="h-full">
-               <ChatPanel :paper-id="paperId" />
+              <ChatPanel v-model:context="chatContext" :paper-id="paperId" />
             </div>
           </el-tab-pane>
         </el-tabs>

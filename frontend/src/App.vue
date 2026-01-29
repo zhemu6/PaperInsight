@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
 // @ts-ignore
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 
 import BasicLayout from '~/layouts/BasicLayout.vue'
 import BlankLayout from '~/layouts/BlankLayout.vue'
@@ -12,7 +12,7 @@ const route = useRoute()
 // Map string keys to components
 const layouts: Record<string, any> = {
   basic: BasicLayout,
-  blank: BlankLayout
+  blank: BlankLayout,
 }
 
 // Determine layout based on route
@@ -32,7 +32,9 @@ const layout = computed(() => {
 
 <style>
 /* Global Styles */
-html, body, #app {
+html,
+body,
+#app {
   height: 100%;
   margin: 0;
   padding: 0;

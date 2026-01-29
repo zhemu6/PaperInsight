@@ -163,6 +163,12 @@
             <artifactId>jsonschema-module-jackson</artifactId>
             <version>4.31.1</version>
         </dependency>
+        <!-- Higress Ai 网关 -->
+        <dependency>
+            <groupId>io.agentscope</groupId>
+            <artifactId>agentscope-extensions-higress</artifactId>
+            <version>1.0.8</version>
+        </dependency>
     </dependencies>
 
     <build>

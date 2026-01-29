@@ -1,8 +1,8 @@
 <script setup lang="ts">
+import { Search } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ElMessage } from 'element-plus'
-import { Search } from '@element-plus/icons-vue'
 import request from '~/request'
 
 const { t } = useI18n()
@@ -11,7 +11,7 @@ const loading = ref(false)
 const rankData = ref<any>(null)
 const hasSearched = ref(false)
 
-const searchJournal = async () => {
+async function searchJournal() {
   if (!journalName.value.trim()) {
     ElMessage.warning(t('journal.message.inputRequired'))
     return
@@ -29,7 +29,7 @@ const searchJournal = async () => {
       rankData.value = res.data
     }
   }
-  catch (e: any) {
+  catch {
     // 错误已被拦截器处理
   }
   finally {
@@ -38,7 +38,7 @@ const searchJournal = async () => {
 }
 
 // 获取等级标签颜色
-const getTagType = (key: string, value: string): string => {
+function getTagType(key: string, value: string): any {
   if (key === 'sciwarn')
     return 'danger'
   if (['Q1', '1区', 'A', 'A+', 'A++', 'TOP', 'AAA'].includes(value))
@@ -54,12 +54,12 @@ const getTagType = (key: string, value: string): string => {
 <template>
   <div class="h-full flex flex-col">
     <!-- 搜索区域 -->
-    <div class="mb-6 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100 dark:border-gray-800">
-      <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
-        <div class="i-ep-search text-xl text-primary" />
+    <div class="mb-6 border border-gray-100 rounded-xl bg-white p-6 shadow-sm transition-shadow duration-300 dark:border-gray-800 dark:bg-gray-800 hover:shadow-md">
+      <h2 class="mb-4 flex items-center gap-2 text-lg font-bold">
+        <div class="i-ep-search text-primary text-xl" />
         {{ t('journal.title') }}
       </h2>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+      <p class="mb-4 text-sm text-gray-500 dark:text-gray-400">
         {{ t('journal.subtitle') }}
       </p>
 
@@ -85,24 +85,24 @@ const getTagType = (key: string, value: string): string => {
     </div>
 
     <!-- 结果展示区域 -->
-    <div v-if="loading" class="flex-1 flex items-center justify-center">
-      <el-icon class="is-loading text-4xl text-primary">
+    <div v-if="loading" class="flex flex-1 items-center justify-center">
+      <el-icon class="is-loading text-primary text-4xl">
         <div class="i-ep-loading" />
       </el-icon>
     </div>
 
     <div v-else-if="rankData" class="flex-1 overflow-auto">
-      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100 dark:border-gray-800">
-        <h3 class="text-base font-bold mb-4 pb-3 border-b border-gray-100 dark:border-gray-700">
+      <div class="border border-gray-100 rounded-xl bg-white p-6 shadow-sm transition-shadow duration-300 dark:border-gray-800 dark:bg-gray-800 hover:shadow-md">
+        <h3 class="mb-4 border-b border-gray-100 pb-3 text-base font-bold dark:border-gray-700">
           {{ t('journal.result.title') }}
         </h3>
 
         <!-- 官方数据集 -->
         <div v-if="rankData.officialRank?.all && Object.keys(rankData.officialRank.all).length > 0">
-          <h4 class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">
+          <h4 class="mb-3 text-sm text-gray-600 font-medium dark:text-gray-400">
             {{ t('journal.result.official') }}
           </h4>
-          <div class="flex flex-wrap gap-2 mb-6">
+          <div class="mb-6 flex flex-wrap gap-2">
             <el-tag
               v-for="(value, key) in rankData.officialRank.all"
               :key="key"
@@ -118,7 +118,7 @@ const getTagType = (key: string, value: string): string => {
 
         <!-- 自定义数据集 -->
         <div v-if="rankData.customRank?.rank?.length > 0">
-          <h4 class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">
+          <h4 class="mb-3 text-sm text-gray-600 font-medium dark:text-gray-400">
             {{ t('journal.result.custom') }}
           </h4>
           <div class="flex flex-wrap gap-2">
@@ -145,23 +145,23 @@ const getTagType = (key: string, value: string): string => {
         <!-- 无数据 -->
         <div
           v-if="(!rankData.officialRank?.all || Object.keys(rankData.officialRank.all).length === 0) && (!rankData.customRank?.rank || rankData.customRank.rank.length === 0)"
-          class="text-center text-gray-400 py-8"
+          class="py-8 text-center text-gray-400"
         >
-          <div class="i-ep-warning text-4xl mb-2 mx-auto" />
+          <div class="i-ep-warning mx-auto mb-2 text-4xl" />
           <p>{{ t('journal.result.empty') }}</p>
         </div>
       </div>
     </div>
 
     <!-- 未搜索提示 -->
-    <div v-else-if="!hasSearched" class="flex-1 flex flex-col items-center justify-center text-gray-400">
-      <div class="i-ep-notebook text-6xl mb-4" />
+    <div v-else-if="!hasSearched" class="flex flex-1 flex-col items-center justify-center text-gray-400">
+      <div class="i-ep-notebook mb-4 text-6xl" />
       <p>{{ t('journal.result.initial') }}</p>
     </div>
 
     <!-- 搜索无结果 -->
-    <div v-else class="flex-1 flex flex-col items-center justify-center text-gray-400">
-      <div class="i-ep-document-delete text-6xl mb-4" />
+    <div v-else class="flex flex-1 flex-col items-center justify-center text-gray-400">
+      <div class="i-ep-document-delete mb-4 text-6xl" />
       <p>{{ t('journal.result.notFound') }}</p>
     </div>
 
@@ -170,7 +170,7 @@ const getTagType = (key: string, value: string): string => {
       <a
         href="https://www.easyscholar.cc/"
         target="_blank"
-        class="text-xs text-gray-400 hover:text-primary transition-colors flex items-center justify-center gap-1"
+        class="hover:text-primary flex items-center justify-center gap-1 text-xs text-gray-400 transition-colors"
       >
         <div class="i-ep-link" />
         {{ t('journal.credit') }}

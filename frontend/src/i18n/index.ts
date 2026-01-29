@@ -3,8 +3,8 @@
  * 支持中英文切换，自动识别浏览器语言
  */
 import { createI18n } from 'vue-i18n'
-import zh from './zh'
 import en from './en'
+import zh from './zh'
 
 const STORAGE_KEY = 'paper-insight-locale'
 

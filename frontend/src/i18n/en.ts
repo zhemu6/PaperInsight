@@ -9,6 +9,7 @@ export default {
     delete: 'Delete',
     edit: 'Edit',
     add: 'Add',
+    analysis: 'Analysis',
     search: 'Search',
     loading: 'Loading...',
     error: 'Error',
@@ -27,6 +28,10 @@ export default {
     viewDetail: 'View Detail',
     more: 'More',
     unknown: 'Unknown',
+    page: 'Page',
+    explain: 'Explain',
+    translate: 'Translate',
+    reference: 'Reference',
   },
   nav: {
     home: 'Home',
@@ -367,7 +372,7 @@ export default {
     profileMenu: {
       profile: 'Personal Info',
       security: 'Security',
-      preference: 'Preferences'
+      preference: 'Preferences',
     },
     profileInfo: {
       editTitle: 'Settings',
@@ -391,7 +396,7 @@ export default {
       uploadSizeError: 'Image size cannot exceed 10MB!',
       uploadSuccess: 'Avatar uploaded successfully',
       uploadError: 'Upload failed: ',
-      uploadErrorGeneric: 'Upload error'
+      uploadErrorGeneric: 'Upload error',
     },
     security: {
       title: 'Account Security',
@@ -417,7 +422,7 @@ export default {
         sendError: 'Send failed',
         incomplete: 'Please fill in all information',
         success: 'Email updated successfully',
-        updateError: 'Update failed'
+        updateError: 'Update failed',
       },
       password: {
         label: 'Password',
@@ -437,13 +442,13 @@ export default {
         mismatch: 'Passwords do not match',
         lengthWarning: 'Password length should be at least 8 chars',
         success: 'Password updated, please login again',
-        updateError: 'Update failed'
+        updateError: 'Update failed',
       },
-      back: 'Back to Settings'
+      back: 'Back to Settings',
     },
     preference: {
-      developing: 'Preferences feature under development...'
-    }
+      developing: 'Preferences feature under development...',
+    },
   },
   validation: {
     required: 'This field is required',

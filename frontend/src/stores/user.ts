@@ -15,7 +15,8 @@ export const useUserStore = defineStore(
         if (res.code === 0 && res.data) {
           loginUser.value = res.data
         }
-      } catch (error) {
+      }
+      catch {
         // 获取失败，可能是没登录，保持默认
       }
     }

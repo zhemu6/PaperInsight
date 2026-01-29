@@ -2,181 +2,149 @@
 
 > AI-driven academic paper management with AgentScope multi-agent framework.
 
-## Commands
+## 🤖 Agent Behavior Guidelines (MUST FOLLOW)
+
+1.  **Code Style**:
+    *   **Backend**: Strict Java 21+ style. Use Records, text blocks, and `var`.
+    *   **Frontend**: Strict Standard JS style (no semicolons) via `@antfu/eslint-config`.
+2.  **Verification**:
+    *   **Always** run `mvn test` after backend changes.
+    *   **Always** run `pnpm typecheck` and `pnpm lint` after frontend changes.
+3.  **Refactoring**:
+    *   Do not refactor working code unless explicitly requested.
+    *   Preserve existing folder structures (e.g., `pages/` for routing).
+
+## 🛠 Commands
 
 ### Backend (Spring Boot 3.5.10 + Java 21)
-```bash
-mvn clean compile                              # Build
-mvn spring-boot:run                            # Run (dev profile)
-mvn test                                       # Run all tests
-mvn test -Dtest=PaperInsightApplicationTests   # Single test class
-mvn test -Dtest=ClassName#methodName           # Single test method
-mvn clean package -DskipTests                  # Package
-```
+| Action | Command | Note |
+|--------|---------|------|
+| **Build** | `mvn clean compile` | Basic compilation |
+| **Run** | `mvn spring-boot:run` | Starts on port 8123 |
+| **Test All** | `mvn test` | **Mandatory** before commit |
+| **Test One** | `mvn test -Dtest=ClassName` | Class level |
+| **Test Method** | `mvn test -Dtest=Class#method` | Method level |
+| **Package** | `mvn clean package -DskipTests` | For deployment |
 
 ### Frontend (Vue 3 + Vite)
-```bash
-cd frontend
-pnpm install          # Install (pnpm 10.14.0)
-pnpm dev              # Dev server (localhost:5173)
-pnpm typecheck        # Type check
-pnpm lint             # Lint
-pnpm build            # Build
-pnpm openapi          # Generate API types from OpenAPI
-```
+Workdir: `cd frontend`
+| Action | Command | Note |
+|--------|---------|------|
+| **Install** | `pnpm install` | Requires pnpm 10.14+ |
+| **Dev** | `pnpm dev` | Starts on localhost:5173 |
+| **Lint** | `pnpm lint` | **Mandatory**. Fixes formatting |
+| **Typecheck** | `pnpm typecheck` | **Mandatory**. Vue-TSC |
+| **API Gen** | `pnpm openapi` | Syncs with backend |
+| **Test** | *(None configured)* | |
 
-## Project Structure
-```
+## 📂 Project Structure
+
+```text
 src/main/java/com/zhemu/paperinsight/
+├── agent/          # AgentScope agents (core/, tools/, config/)
 ├── controller/     # REST endpoints (@RestController)
-├── service/impl/   # Business logic
-├── mapper/         # MyBatis-Plus data access
-├── model/entity/   # DB entities | dto/ Requests | vo/ Responses
-├── agent/          # AgentScope AI agents
-├── exception/      # Error handling (ErrorCode, ThrowUtils)
-└── mq/             # RabbitMQ consumers/producers
+├── service/impl/   # Business logic (@Service)
+├── mapper/         # MyBatis-Plus interfaces
+├── model/entity/   # DB Entities (@TableName)
+├── model/dto/      # Request Data Transfer Objects
+├── model/vo/       # Response View Objects
+└── mq/             # RabbitMQ consumers
 
 frontend/src/
-├── api/            # Auto-generated API clients
-├── pages/          # File-based routing pages
+├── api/            # Generated API clients (do not edit manually)
+├── components/     # Shared Vue components
+├── pages/          # File-based routing (unplugin-vue-router)
 ├── stores/         # Pinia state stores
-└── components/     # Vue components
+└── types/          # Global TypeScript definitions
 ```
 
-## Backend Code Style
+## ☕ Backend Code Style (Java 21)
 
-### Java 21 Features (USE THEM)
+### 1. Modern Java Features
+Use **Records** for immutable DTOs, **Text Blocks** for SQL/JSON, and **Switch Expressions**.
 ```java
-// Records for DTOs
+// Record
 public record UserInfo(String name, String email) {}
 
-// Pattern matching switch
-return switch (value) {
-    case String s -> "String: " + s;
-    case null -> "null";
-    default -> value.toString();
+// Switch Expression
+String type = switch (input) {
+    case "A" -> "Type A";
+    default -> "Unknown";
 };
-
-// Text blocks
-String sql = """
-    SELECT * FROM users WHERE status = 'ACTIVE'
-    """;
 ```
 
-### Naming Conventions
-| Element | Convention | Example |
-|---------|------------|---------|
-| Class | PascalCase | `PaperController` |
-| Method/Field | camelCase | `findUserById` |
-| Constant | UPPER_SNAKE | `MAX_PAGE_SIZE` |
-| Request DTO | XxxRequest | `PaperAddRequest` |
-| Response VO | XxxVO | `PaperVO` |
+### 2. Controller & Error Handling
+- Return `BaseResponse<T>`.
+- Use `ThrowUtils` for validations.
+- **Never** catch generic `Exception` without re-throwing or logging.
 
-### Controller Pattern
 ```java
 @RestController
 @RequestMapping("/paper")
 @RequiredArgsConstructor
 public class PaperController {
-    private final PaperInfoService paperInfoService;
+    private final PaperService paperService;
 
     @PostMapping("/add")
-    @AuthCheck
-    public BaseResponse<Long> addPaper(@RequestBody @Validated PaperAddRequest request) {
-        ThrowUtils.throwIf(request == null, ErrorCode.PARAMS_ERROR);
-        return ResultUtils.success(paperInfoService.addPaper(request));
+    public BaseResponse<Long> add(@RequestBody @Validated PaperAddRequest req) {
+        ThrowUtils.throwIf(req == null, ErrorCode.PARAMS_ERROR);
+        return ResultUtils.success(paperService.add(req));
     }
 }
 ```
 
-### Error Handling
-```java
-// Use ErrorCode enum
-ThrowUtils.throwIf(condition, ErrorCode.PARAMS_ERROR);
-ThrowUtils.throwIf(condition, ErrorCode.NOT_FOUND_ERROR, "Custom message");
-throw new BusinessException(ErrorCode.OPERATION_ERROR, "详细信息");
-
-// ErrorCode values: SUCCESS(0), PARAMS_ERROR(40000), NOT_LOGIN_ERROR(40100),
-// NO_AUTH_ERROR(40101), NOT_FOUND_ERROR(40400), SYSTEM_ERROR(50000)
-```
-
-### Response Format
-```java
-// All responses use BaseResponse<T> with code/data/message
-return ResultUtils.success(data);      // code=0
-return ResultUtils.error(ErrorCode.X); // code=error code
-```
-
-### Entity Pattern (MyBatis-Plus)
+### 3. MyBatis-Plus Entities
+Use Lombok `@Data`, `@Builder`. Use Logical Deletion.
 ```java
 @TableName("paper_info")
-@Data @Builder @AllArgsConstructor @NoArgsConstructor
-public class PaperInfo implements Serializable {
+@Data @Builder
+public class PaperInfo {
     @TableId(type = IdType.AUTO)
     private Long id;
-    private String title;
     @TableLogic
-    private Integer isDelete;  // Logical delete
+    private Integer isDelete; // 0=valid, 1=deleted
 }
 ```
 
-## Frontend Code Style
+## 🎨 Frontend Code Style (Vue 3 + TS)
 
-### Vue Component Structure
+### 1. Component Setup
+Use `<script setup lang="ts">`. Use `~/` alias for imports.
 ```vue
 <script setup lang="ts">
-// 1. Vue core
-import { onMounted, ref } from 'vue'
-// 2. Vue ecosystem
-import { useRouter } from 'vue-router'
-// 3. UI library
-import { ElMessage } from 'element-plus'
-// 4. Local (use ~/ alias)
-import { listPaperByPage } from '~/api/paperController'
+import { ref, onMounted } from 'vue'
+import { listPaper } from '~/api/paper' // Use alias
 
-const loading = ref(false)
-const papers = ref<any[]>([])
-
-const fetchPapers = async () => {
-  try {
-    loading.value = true
-    const res = await listPaperByPage({}) as any
-    if (res.code === 0) papers.value = res.data.records
-  } finally {
-    loading.value = false
-  }
+const list = ref([])
+const fetch = async () => {
+  const res = await listPaper({})
+  if (res.code === 0) list.value = res.data
 }
-onMounted(fetchPapers)
 </script>
 
 <template>
-  <div class="h-full flex flex-col p-6"><!-- UnoCSS --></div>
+  <!-- Use UnoCSS utility classes -->
+  <div class="p-4 flex flex-col gap-2">
+    <div v-for="item in list" :key="item.id">{{ item.title }}</div>
+  </div>
 </template>
 ```
 
-### Pinia Store Pattern
+### 2. State Management (Pinia)
+Use Setup Stores pattern with persistence.
 ```typescript
 export const useUserStore = defineStore('user', () => {
-  const loginUser = ref<API.SysUserVO>({ userName: '' })
-  async function fetchLoginUser() { /* ... */ }
-  return { loginUser, fetchLoginUser }
+  const user = ref(null)
+  return { user }
 }, { persist: true })
 ```
 
-### TypeScript
-- Strict mode enabled
-- Use `~/` alias for src imports
-- API types auto-generated in `src/api/typings.d.ts`
-- ESLint: @antfu/eslint-config with Vue + UnoCSS
+### 3. Linting Rules (@antfu)
+*   **No Semicolons**
+*   **Single Quotes**
+*   **Trailing Commas**
+*   Run `pnpm lint` to auto-fix.
 
-## Key Dependencies
-
-**Backend**: Spring Boot 3.5.10, Java 21, MyBatis-Plus 3.5.10, AgentScope 1.0.8, Hutool 5.8.37, Knife4j 4.4.0
-
-**Frontend**: Vue 3.5.18, Vite 7.x, Element Plus 2.10.5, UnoCSS 66.x, Pinia 3.x, TypeScript 5.x
-
-## Development Notes
-- API Docs: `http://localhost:8123/api/doc.html` (Knife4j)
-- API prefix: `/api`
-- MySQL 8.0 with logical delete (`is_delete`), underscore to camelCase mapping
-- Frontend file-based routing via `unplugin-vue-router`
+## 📦 Key Dependencies
+*   **Java**: Spring Boot 3.5.10, MyBatis-Plus 3.5.10, AgentScope 1.0.8, Hutool 5.8.37
+*   **Node**: Vue 3.5, Vite 7, Element Plus 2.10, UnoCSS, Pinia

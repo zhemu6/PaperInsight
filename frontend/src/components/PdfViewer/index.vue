@@ -11,11 +11,11 @@ const props = defineProps<{
 
 <template>
   <div class="h-full w-full">
-    <VuePdfApp 
-      :pdf="url" 
-      theme="light" 
-      :config="{ 
-        sidebar: false, 
+    <VuePdfApp
+      :pdf="url"
+      theme="light"
+      :config="{
+        sidebar: false,
         toolbar: {
           toolbarViewerLeft: {
             findbar: true,
@@ -23,14 +23,19 @@ const props = defineProps<{
             next: true,
             pageNumber: true,
           },
+          toolbarViewerMiddle: {
+            zoomOut: true,
+            zoomIn: true,
+            scaleSelect: true,
+          },
           toolbarViewerRight: {
             presentationMode: true,
             openFile: false,
             print: false,
             download: true,
             viewBookmark: false,
-          }
-        }
+          },
+        },
       }"
     />
   </div>

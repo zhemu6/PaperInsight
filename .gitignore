@@ -2,6 +2,7 @@
 application.yml
 application-dev.yml
 application-prod.yml
+.env.example
 
 
 

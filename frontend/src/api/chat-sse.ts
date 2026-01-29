@@ -103,6 +103,6 @@ export function clearSession(paperId: number | string) {
  */
 export function stopChat(chatId: string) {
   return fetch(`/api/assistant/stop?chatId=${chatId}`, {
-    method: 'POST'
+    method: 'POST',
   })
 }

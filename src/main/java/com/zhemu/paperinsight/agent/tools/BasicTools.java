@@ -7,16 +7,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * @author: lushihao
- * @version: 1.0
- *           create: 2026-01-26 21:11
+ * 基础工具集
+ * 包含通用的基础功能
  */
-@Component
+@Component("basicTools")
 @Slf4j
-public class AnaTools {
+public class BasicTools {
 
     @Tool(name = "get-now-time", description = "获取当前时间")
     public Mono<String> getNowTime() {
         return Mono.fromSupplier(DateUtil::now);
     }
+
+    
 }

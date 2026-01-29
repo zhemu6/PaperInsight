@@ -1,6 +1,7 @@
 package com.zhemu.paperinsight.controller;
 
 import com.zhemu.paperinsight.agent.core.ChatAgent;
+import com.zhemu.paperinsight.annotation.AuthCheck;
 import com.zhemu.paperinsight.common.UserContext;
 import io.agentscope.core.agent.Event;
 import io.agentscope.core.message.*;
@@ -39,6 +40,7 @@ public class ChatController {
          * @return SSE 事件流
          */
         @GetMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+        @AuthCheck
         public Flux<ServerSentEvent<String>> chatStream(
                         @RequestParam String chatId,
                         @RequestParam String userQuery,
@@ -77,6 +79,7 @@ public class ChatController {
          * @param chatId 对话ID
          */
         @PostMapping("/stop")
+        @AuthCheck
         public void stopStream(@RequestParam String chatId) {
                 log.info("Received stop request for chat: {}", chatId);
                 chatAgent.stop(chatId);
@@ -92,7 +95,7 @@ public class ChatController {
         public void processStream(Flux<Event> generator, Sinks.Many<ServerSentEvent<String>> sink) {
                 generator
                                 // 1. 记录原始输出日志
-                                .doOnNext(output -> log.info("output = {}", output))
+//                                .doOnNext(output -> log.info("output = {}", output))
                                 // 2. 过滤掉最后的一条结束消息（通常是系统状态消息）
                                 // .filter(event -> !event.isLast())
                                 // 3. 提取消息内容并包装为 SSE 事件
@@ -205,6 +208,7 @@ public class ChatController {
          * @return 历史消息列表
          */
         @GetMapping("/history")
+        @AuthCheck
         public List<HistoryItem> getHistory(@RequestParam String chatId) {
                 List<HistoryItem> list = chatAgent.getHistory(chatId).stream()
                                 // 过滤掉系统消息（保留工具消息）

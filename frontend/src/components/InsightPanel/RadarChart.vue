@@ -1,15 +1,20 @@
 <script setup lang="ts">
-import { use } from 'echarts/core'
 import { RadarChart } from 'echarts/charts'
 import {
+  LegendComponent,
   TitleComponent,
   TooltipComponent,
-  LegendComponent,
 } from 'echarts/components'
+import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import VChart from 'vue-echarts'
 import { computed } from 'vue'
+import VChart from 'vue-echarts'
 import { useI18n } from 'vue-i18n'
+
+const props = defineProps<{
+  data: Record<string, any>
+  score: number
+}>()
 
 use([
   CanvasRenderer,
@@ -21,18 +26,13 @@ use([
 
 const { t } = useI18n()
 
-const props = defineProps<{
-  data: Record<string, any>
-  score: number
-}>()
-
 const option = computed(() => {
   // 维度中文映射
   const labelMap: Record<string, string> = {
     writing: t('paperDetail.radar.dimensions.writing'),
     technical: t('paperDetail.radar.dimensions.technical'),
     innovation: t('paperDetail.radar.dimensions.innovation'),
-    practicality: t('paperDetail.radar.dimensions.practicality')
+    practicality: t('paperDetail.radar.dimensions.practicality'),
   }
 
   // 维度满分映射
@@ -40,7 +40,7 @@ const option = computed(() => {
     writing: 20,
     technical: 30,
     innovation: 30,
-    practicality: 20
+    practicality: 20,
   }
 
   // 默认维度 (如果 data 为空)
@@ -50,12 +50,12 @@ const option = computed(() => {
     { name: t('paperDetail.radar.dimensions.practicality'), max: 20 },
     { name: t('paperDetail.radar.dimensions.writing'), max: 20 },
   ]
-  
+
   // 尝试从 props.data 解析维度
-  const indicator = Object.keys(props.data || {}).length > 0 
-    ? Object.keys(props.data).map(key => ({ 
-        name: labelMap[key] || key, 
-        max: maxMap[key] || 100 
+  const indicator = Object.keys(props.data || {}).length > 0
+    ? Object.keys(props.data).map(key => ({
+        name: labelMap[key] || key,
+        max: maxMap[key] || 100,
       }))
     : defaultDimensions
 
@@ -71,17 +71,17 @@ const option = computed(() => {
       top: '0',
       textStyle: {
         color: '#333',
-        fontSize: 16
-      }
+        fontSize: 16,
+      },
     },
     tooltip: {},
     radar: {
-      indicator: indicator,
+      indicator,
       radius: '65%',
       center: ['50%', '55%'],
       splitNumber: 5,
       axisName: {
-        color: '#666'
+        color: '#666',
       },
       splitLine: {
         lineStyle: {
@@ -91,18 +91,18 @@ const option = computed(() => {
             'rgba(238, 197, 102, 0.4)',
             'rgba(238, 197, 102, 0.6)',
             'rgba(238, 197, 102, 0.8)',
-            'rgba(238, 197, 102, 1)'
-          ].reverse()
-        }
+            'rgba(238, 197, 102, 1)',
+          ].reverse(),
+        },
       },
       splitArea: {
-        show: false
+        show: false,
       },
       axisLine: {
         lineStyle: {
-          color: 'rgba(238, 197, 102, 0.5)'
-        }
-      }
+          color: 'rgba(238, 197, 102, 0.5)',
+        },
+      },
     },
     series: [
       {
@@ -114,21 +114,21 @@ const option = computed(() => {
             name: 'Paper Score',
             symbol: 'none',
             itemStyle: {
-              color: '#F97316'
+              color: '#F97316',
             },
             areaStyle: {
-              opacity: 0.2
-            }
-          }
-        ]
-      }
-    ]
+              opacity: 0.2,
+            },
+          },
+        ],
+      },
+    ],
   }
 })
 </script>
 
 <template>
-  <div class="h-60 w-full flex justify-center items-center">
+  <div class="h-60 w-full flex items-center justify-center">
     <VChart class="chart" :option="option" autoresize />
   </div>
 </template>
