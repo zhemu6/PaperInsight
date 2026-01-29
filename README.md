@@ -128,6 +128,9 @@ npm run dev
 
 PaperInsight 正在积极开发中。如果您有任何建议或发现了 Bug，欢迎提交 Issue 或 Pull Request。
 
+
+> 本项目遵循 [GitHub Flow](https://guides.github.com/introduction/flow/) 标准开发流程。
+
 ---
 
 © 2026 PaperInsight Team. All Rights Reserved.
