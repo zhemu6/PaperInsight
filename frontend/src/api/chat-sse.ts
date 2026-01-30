@@ -38,13 +38,14 @@ export interface ChatEvent {
 export function startChatStream(
   chatId: string,
   userQuery: string,
+  titleCandidate: string | undefined,
   onEvent: (event: ChatEvent) => void,
   onDone: () => void,
   onError: (error: any) => void,
 ): EventSource {
   // 更新为新的 API 路径: /assistant/chat
   // 参数: chatId, userQuery, userId
-  const url = `/api/assistant/chat?chatId=${chatId}&userQuery=${encodeURIComponent(userQuery)}`
+  const url = `/api/assistant/chat?chatId=${chatId}&userQuery=${encodeURIComponent(userQuery)}${titleCandidate ? `&title=${encodeURIComponent(titleCandidate)}` : ''}`
   const eventSource = new EventSource(url)
 
   let sawTerminal = false
@@ -87,7 +88,14 @@ export async function getChatHistory(chatId: string) {
   if (!response.ok) {
     throw new Error('Failed to fetch history')
   }
-  return await response.json()
+  const data = await response.json()
+  // When backend throws BusinessException, GlobalExceptionHandler returns BaseResponse JSON
+  if (data && typeof data === 'object' && !Array.isArray(data) && 'code' in data) {
+    if ((data as any).code !== 0)
+      throw new Error((data as any).message || 'Failed to fetch history')
+    return (data as any).data
+  }
+  return data
 }
 
 /**

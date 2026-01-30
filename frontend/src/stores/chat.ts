@@ -151,33 +151,39 @@ export const useChatStore = defineStore('chat', () => {
       if (history && history.length > 0) {
         const mergedMessages: ChatMessage[] = []
         history.forEach((item: any) => {
-          const rawContent = item.content
           const items: ChatItem[] = []
           let textContent = ''
 
-          if (Array.isArray(rawContent)) {
-            rawContent.forEach((c: any) => {
-              if (c.type === 'text') {
-                items.push({ type: 'text', text: c.text })
-                textContent += c.text
-              }
-              else if (c.type === 'thinking') {
-                items.push({ type: 'thinking', thinking: c.thinking })
-              }
-              else if (c.type === 'tool_use') {
-                items.push({ type: 'tool_use', id: c.id, name: c.name, input: c.input })
-              }
-              else if (c.type === 'tool_result') {
-                items.push({ type: 'tool_result', id: c.id, name: c.name, output: c.output })
-              }
-            })
-          }
-          else if (typeof rawContent === 'string') {
-            textContent = rawContent
-            items.push({ type: 'text', text: rawContent })
-          }
+          const events = Array.isArray(item.events) ? item.events : []
+          events.forEach((e: any) => {
+            if (e.type === 'TEXT') {
+              const t = e.content || ''
+              items.push({ type: 'text', text: t })
+              textContent += t
+            }
+            else if (e.type === 'THINKING') {
+              const t = e.content || ''
+              items.push({ type: 'thinking', thinking: t })
+            }
+            else if (e.type === 'TOOL_USE') {
+              items.push({
+                type: 'tool_use',
+                id: e.toolId,
+                name: e.toolName || 'tool',
+                input: e.toolInput ? JSON.stringify(e.toolInput, null, 2) : '',
+              })
+            }
+            else if (e.type === 'TOOL_RESULT') {
+              items.push({
+                type: 'tool_result',
+                id: e.toolId,
+                name: e.toolName || 'tool',
+                output: e.toolResult || '',
+              })
+            }
+          })
 
-          const role = (item.role === 'model' || item.role === 'tool') ? 'assistant' : item.role
+          const role = item.role === 'user' ? 'user' : 'assistant'
 
           // 解析引用内容
           let reference: string | undefined
@@ -230,30 +236,20 @@ export const useChatStore = defineStore('chat', () => {
         messages.value = mergedMessages
       }
       else {
-        setWelcomeMessage()
+        messages.value = []
       }
     }
     catch (error) {
-      setWelcomeMessage()
+      messages.value = []
+      throw error
     }
     finally {
       isLoading.value = false
     }
   }
 
-  function setWelcomeMessage() {
-    messages.value = [{
-      id: 'welcome',
-      role: 'assistant',
-      content: '你好！我是你的论文助手。关于这篇论文，你想了解什么？',
-      status: 'done',
-      timestamp: Date.now(),
-    }]
-  }
-
   function clearMessages() {
     messages.value = []
-    setWelcomeMessage()
   }
 
   return {
