@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import {
+  Bell,
   Document,
   Location,
   Search,
@@ -31,6 +32,13 @@ import {
       <el-icon><Search /></el-icon>
       <template #title>
         {{ $t('nav.journalQuery') }}
+      </template>
+    </el-menu-item>
+
+    <el-menu-item index="/notifications">
+      <el-icon><Bell /></el-icon>
+      <template #title>
+        {{ $t('nav.notifications') }}
       </template>
     </el-menu-item>
 

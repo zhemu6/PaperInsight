@@ -2,6 +2,7 @@
 import type { UploadRequestOptions } from 'element-plus'
 import { ElMessage } from 'element-plus'
 import * as pdfjsLib from 'pdfjs-dist'
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import { reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { uploadFile } from '~/api/fileController'
@@ -20,9 +21,8 @@ const emits = defineEmits<{
 const { t } = useI18n()
 
 // Set worker source
-// 使用 CDN 或者本地静态资源配置 worker
-// 注意：在 Vite 中，通常需要配置 worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
+// NOTE: 本项目同时使用 vue3-pdf-app（其内部可能绑定不同版本的 pdf.js worker）。
+// 这里显式绑定当前安装的 pdfjs-dist worker，避免 API/Worker 版本不匹配。
 
 const activeStep = ref(0)
 const loading = ref(false)
@@ -95,8 +95,11 @@ watch(() => props.visible, (val) => {
 // 生成封面
 async function generateCover(file: File): Promise<string> {
   try {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker
     const arrayBuffer = await file.arrayBuffer()
-    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
+    const loadingTask = pdfjsLib.getDocument({
+      data: arrayBuffer,
+    })
     const pdf = await loadingTask.promise
     const page = await pdf.getPage(1)
 
@@ -227,7 +230,7 @@ async function handleSubmit() {
         dialogVisible.value = false
         emits('success')
       }
-      catch (error: any) {
+      catch {
         // Error handled in request interceptor usually, but safe to catch
       }
       finally {

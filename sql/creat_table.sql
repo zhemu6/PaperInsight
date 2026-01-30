@@ -105,3 +105,67 @@ CREATE TABLE agentscope_sessions (
                                      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                                      PRIMARY KEY (session_id, state_key, item_index)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- =============================================
+-- 2.6 用户通知表 (notification)
+-- =============================================
+CREATE TABLE IF NOT EXISTS `notification`
+(
+    `id`          bigint       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `user_id`     bigint       NOT NULL COMMENT '接收用户ID',
+    `type`        varchar(64)  NOT NULL COMMENT '通知类型(如: paper_analysis_success/paper_analysis_failed)',
+    `title`       varchar(256) NOT NULL COMMENT '通知标题',
+    `content`     text COMMENT '通知内容',
+    `payload_json` longtext COMMENT '扩展信息(JSON)',
+    `dedup_key`   varchar(128)          DEFAULT NULL COMMENT '幂等去重Key',
+    `read_time`   datetime              DEFAULT NULL COMMENT '已读时间',
+    `create_time` datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `is_delete`   tinyint      NOT NULL DEFAULT '0' COMMENT '是否删除',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_dedupKey` (`dedup_key`),
+    KEY `idx_user_read` (`user_id`, `read_time`),
+    KEY `idx_user_time` (`user_id`, `create_time`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci COMMENT ='用户通知表';
+
+-- =============================================
+-- 2.7 公告表 (announcement)
+-- =============================================
+CREATE TABLE IF NOT EXISTS `announcement`
+(
+    `id`            bigint       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `title`         varchar(256) NOT NULL COMMENT '公告标题',
+    `content`       longtext COMMENT '公告内容(Markdown/纯文本)',
+    `status`        varchar(32)  NOT NULL DEFAULT 'draft' COMMENT '状态(draft/published)',
+    `publish_time`  datetime              DEFAULT NULL COMMENT '发布时间',
+    `publisher_id`  bigint                DEFAULT NULL COMMENT '发布人ID(管理员)',
+    `create_time`   datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time`   datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `is_delete`     tinyint      NOT NULL DEFAULT '0' COMMENT '是否删除',
+    PRIMARY KEY (`id`),
+    KEY `idx_status_publishTime` (`status`, `publish_time`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci COMMENT ='系统公告表';
+
+-- =============================================
+-- 2.8 公告已读表 (announcement_read)
+-- =============================================
+CREATE TABLE IF NOT EXISTS `announcement_read`
+(
+    `id`              bigint   NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `announcement_id` bigint   NOT NULL COMMENT '公告ID',
+    `user_id`         bigint   NOT NULL COMMENT '用户ID',
+    `read_time`       datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '已读时间',
+    `create_time`     datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time`     datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `is_delete`       tinyint  NOT NULL DEFAULT '0' COMMENT '是否删除',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_announcement_user` (`announcement_id`, `user_id`),
+    KEY `idx_userId` (`user_id`),
+    KEY `idx_announcementId` (`announcement_id`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci COMMENT ='公告已读表';

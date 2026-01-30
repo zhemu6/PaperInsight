@@ -25,6 +25,7 @@ declare module 'vue-router/auto-routes' {
     '/common/nopermissions': RouteRecordInfo<'/common/nopermissions', '/common/nopermissions', Record<never, never>, Record<never, never>>,
     '/common/register': RouteRecordInfo<'/common/register', '/common/register', Record<never, never>, Record<never, never>>,
     '/file/': RouteRecordInfo<'/file/', '/file', Record<never, never>, Record<never, never>>,
+    '/notifications/': RouteRecordInfo<'/notifications/', '/notifications', Record<never, never>, Record<never, never>>,
     '/paper/detail/[id]': RouteRecordInfo<'/paper/detail/[id]', '/paper/detail/:id', { id: ParamValue<true> }, { id: ParamValue<false> }>,
     '/PaperSquare': RouteRecordInfo<'/PaperSquare', '/PaperSquare', Record<never, never>, Record<never, never>>,
     '/tools/journal': RouteRecordInfo<'/tools/journal', '/tools/journal', Record<never, never>, Record<never, never>>,
