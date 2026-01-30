@@ -107,6 +107,26 @@ CREATE TABLE agentscope_sessions (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- =============================================
+-- 2.5.1 Paper chat sessions (business table)
+-- =============================================
+CREATE TABLE IF NOT EXISTS `paper_chat_session`
+(
+    `id`              char(36)     NOT NULL COMMENT 'Chat session id (UUID)',
+    `paper_id`        bigint       NOT NULL COMMENT 'Paper id',
+    `user_id`         bigint       NOT NULL COMMENT 'Owner user id',
+    `title`           varchar(128)          DEFAULT NULL COMMENT 'Session title (first question truncated)',
+    `last_message_at` datetime              DEFAULT NULL COMMENT 'Last message time',
+    `create_time`     datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Create time',
+    `update_time`     datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Update time',
+    `is_delete`       tinyint      NOT NULL DEFAULT '0' COMMENT 'Soft delete',
+    PRIMARY KEY (`id`),
+    KEY `idx_user_paper_time` (`user_id`, `paper_id`, `update_time`),
+    KEY `idx_paper_time` (`paper_id`, `update_time`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci COMMENT ='Paper chat session table';
+
+-- =============================================
 -- 2.6 用户通知表 (notification)
 -- =============================================
 CREATE TABLE IF NOT EXISTS `notification`
