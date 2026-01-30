@@ -10,6 +10,11 @@ import com.zhemu.paperinsight.common.UserContext;
 import com.zhemu.paperinsight.config.RabbitMqConfig;
 import com.zhemu.paperinsight.model.dto.mq.PaperAnalysisMessage;
 import com.zhemu.paperinsight.model.entity.PaperInsight;
+import com.zhemu.paperinsight.model.entity.Notification;
+import com.zhemu.paperinsight.model.enums.NotificationTypeEnum;
+import com.zhemu.paperinsight.model.entity.PaperInfo;
+import com.zhemu.paperinsight.service.PaperInfoService;
+import com.zhemu.paperinsight.service.NotificationService;
 import com.zhemu.paperinsight.service.PaperInsightService;
 import io.agentscope.core.rag.Knowledge;
 import io.agentscope.core.rag.model.Document;
@@ -19,6 +24,7 @@ import io.agentscope.core.rag.reader.SplitStrategy;
 import io.agentscope.core.rag.reader.TextReader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
@@ -39,6 +45,8 @@ public class AnalysisTaskConsumer {
 
     private final PaperAnalysisAgent paperAnalysisAgent;
     private final PaperInsightService paperInsightService;
+    private final NotificationService notificationService;
+    private final PaperInfoService paperInfoService;
     private final Knowledge knowledge;
     private final PdfExtractionTool pdfExtractionTool;
     private final ElasticsearchStore elasticsearchStore;
@@ -65,12 +73,17 @@ public class AnalysisTaskConsumer {
             // 2. 调用 Agent 进行分析 (同步等待结果)
             PaperInsight paperInsight = paperAnalysisAgent.analyzePaper(task.getPaperId(), task.getPdfUrl()).block();
 
-            if (paperInsight != null) {
+                if (paperInsight != null) {
                 // 3. 更新数据库
                 UpdateWrapper<PaperInsight> updateWrapper = new UpdateWrapper<>();
                 updateWrapper.eq("paper_id", task.getPaperId());
                 paperInsightService.update(paperInsight, updateWrapper);
                 log.info("Analysis completed and saved for paperId: {}", task.getPaperId());
+
+                // 3.0 写入用户通知（幂等）
+                createNotificationSafely(task.getUserId(), task.getPaperId(), NotificationTypeEnum.PaperAnalysisSuccess,
+                        "论文已完成分析，请前往详情页查看。",
+                        paperInsight);
 
                 // 3.1 RAG 入库
                 try {
@@ -117,6 +130,10 @@ public class AnalysisTaskConsumer {
 
             } else {
                 log.error("Analysis returned null for paperId: {}", task.getPaperId());
+
+                createNotificationSafely(task.getUserId(), task.getPaperId(), NotificationTypeEnum.PaperAnalysisFailed,
+                        "论文分析失败（空结果），请稍后重试。",
+                        null);
             }
 
             // 4. 确认消息
@@ -124,6 +141,21 @@ public class AnalysisTaskConsumer {
 
         } catch (Exception e) {
             log.error("Failed to process analysis task", e);
+
+            // 尝试写入失败通知（不影响 nack）
+            try {
+                PaperAnalysisMessage task = JSONUtil.toBean(messageStr, PaperAnalysisMessage.class);
+                if (task != null && task.getPaperId() != null) {
+                    if (task.getUserId() != null) {
+                        UserContext.setUserId(task.getUserId());
+                    }
+                    createNotificationSafely(task.getUserId(), task.getPaperId(), NotificationTypeEnum.PaperAnalysisFailed,
+                            "论文分析失败（系统异常），请稍后重试。",
+                            null);
+                }
+            } catch (Exception ignored) {
+                // ignore
+            }
             try {
                 channel.basicNack(deliveryTag, false, false);
             } catch (IOException ex) {
@@ -131,6 +163,53 @@ public class AnalysisTaskConsumer {
             }
         } finally {
             UserContext.clear();
+        }
+    }
+
+    private void createNotificationSafely(Long userId, Long paperId, NotificationTypeEnum type, String content,
+            PaperInsight insight) {
+        if (userId == null || paperId == null) {
+            return;
+        }
+        try {
+            PaperInfo paperInfo = null;
+            try {
+                paperInfo = paperInfoService.getById(paperId);
+            } catch (Exception ignored) {
+                // ignore
+            }
+            String paperTitle = paperInfo == null ? null : paperInfo.getTitle();
+
+            String dedupKey = String.format("%s:%s", type.getValue(), paperId);
+            cn.hutool.json.JSONObject payload = new cn.hutool.json.JSONObject();
+            payload.set("paperId", paperId);
+            if (paperTitle != null) {
+                payload.set("paperTitle", paperTitle);
+            }
+            if (insight != null) {
+                payload.set("score", insight.getScore());
+            }
+
+            String title;
+            if (paperTitle != null) {
+                title = String.format("%s：%s", type.getDesc(), paperTitle);
+            } else {
+                title = type.getDesc();
+            }
+
+            Notification notification = Notification.builder()
+                    .userId(userId)
+                    .type(type.getValue())
+                    .title(title)
+                    .content(content)
+                    .payloadJson(payload.toString())
+                    .dedupKey(dedupKey)
+                    .build();
+            notificationService.save(notification);
+        } catch (DuplicateKeyException e) {
+            // dedupKey 冲突，视为成功
+        } catch (Exception e) {
+            log.warn("Failed to create notification for paperId: {}", paperId, e);
         }
     }
 }

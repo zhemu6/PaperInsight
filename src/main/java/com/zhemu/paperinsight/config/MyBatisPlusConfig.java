@@ -50,8 +50,9 @@ public class MyBatisPlusConfig {
                 // 忽略系统用户表 (登录注册必须能查全表)
                 // 忽略 paper_insight 表 (它通过 paper_id 关联，不直接关联 user_id，或者后续设计加上)
                 // 根据当前设计 paper_insight 一般是一对一 paper_info，间接属于用户。
-                // 暂时只忽略 sys_user，其他表默认开启
-                return "sys_user".equalsIgnoreCase(tableName);
+                // 暂时忽略 sys_user；另外 announcement 为全局表，不包含 user_id，需要忽略租户条件
+                return "sys_user".equalsIgnoreCase(tableName)
+                        || "announcement".equalsIgnoreCase(tableName);
             }
         }));
 
