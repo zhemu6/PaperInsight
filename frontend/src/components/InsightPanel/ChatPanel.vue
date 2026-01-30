@@ -127,14 +127,12 @@ async function handleSend() {
   isLoading.value = true // 开始加载
 
   try {
-    const userId = String(userStore.loginUser.id)
     currentEventSource = startChatStream(
       currentChatId.value,
       fullQuestion,
-      userId,
-      (data, type) => {
-        // 增量更新内容 (支持工具调用)
-        chatStore.handleStreamingUpdate(data, type)
+      (event) => {
+        // Unified ChatEvent stream
+        chatStore.handleStreamingEvent(event)
       },
       () => {
         // 完成

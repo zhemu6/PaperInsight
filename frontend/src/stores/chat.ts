@@ -1,13 +1,14 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { getChatHistory } from '~/api/chat-sse'
+import type { ChatEvent } from '~/api/chat-sse'
 
 // 定义内容项类型
 export type ChatItem
   = | { type: 'text', text: string }
     | { type: 'thinking', thinking: string }
-    | { type: 'tool_use', name: string, input: string, output?: string }
-    | { type: 'tool_result', name: string, output: string }
+    | { type: 'tool_use', id?: string, name: string, input: string }
+    | { type: 'tool_result', id?: string, name: string, output: string }
 
 export interface ChatMessage {
   id: string
@@ -69,9 +70,9 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   /**
-   * 处理流式更新 (支持工具调用)
+   * 处理流式事件 (统一 ChatEvent JSON)
    */
-  function handleStreamingUpdate(data: any, type: string) {
+  function handleStreamingEvent(event: ChatEvent) {
     const lastMsg = messages.value[messages.value.length - 1]
     if (!lastMsg || lastMsg.status !== 'streaming')
       return
@@ -86,7 +87,8 @@ export const useChatStore = defineStore('chat', () => {
       }
     }
 
-    if (type === 'text') {
+    if (event.type === 'TEXT') {
+      const data = event.content || ''
       const lastItem = lastMsg.items[lastMsg.items.length - 1]
       if (lastItem && lastItem.type === 'text') {
         lastItem.text += data
@@ -96,7 +98,8 @@ export const useChatStore = defineStore('chat', () => {
       }
       lastMsg.content += data
     }
-    else if (type === 'thinking') {
+    else if (event.type === 'THINKING') {
+      const data = event.content || ''
       const lastItem = lastMsg.items[lastMsg.items.length - 1]
       if (lastItem && lastItem.type === 'thinking') {
         lastItem.thinking += data
@@ -108,65 +111,35 @@ export const useChatStore = defineStore('chat', () => {
         lastMsg.thinking = ''
       lastMsg.thinking += data
     }
-    else if (type === 'tool_use') {
-      try {
-        const toolData = typeof data === 'string' ? JSON.parse(data) : data
-        let existingIndex = -1
-        for (let i = lastMsg.items.length - 1; i >= 0; i--) {
-          const item = lastMsg.items[i]
-          if (item.type === 'tool_use' && item.name === toolData.name) {
-            existingIndex = i
-            break
-          }
-        }
-        if (existingIndex !== -1) {
-          lastMsg.items[existingIndex] = {
-            type: 'tool_use',
-            name: toolData.name,
-            input: toolData.input,
-          }
-        }
-        else {
-          lastMsg.items.push({
-            type: 'tool_use',
-            name: toolData.name,
-            input: toolData.input,
-          })
-        }
+    else if (event.type === 'TOOL_USE') {
+      const id = event.toolId
+      const name = event.toolName || 'tool'
+      const input = event.toolInput ? JSON.stringify(event.toolInput, null, 2) : ''
+
+      const existingIndex = lastMsg.items.findIndex(item => item.type === 'tool_use' && item.id && id && item.id === id)
+      if (existingIndex !== -1) {
+        lastMsg.items[existingIndex] = { type: 'tool_use', id, name, input }
       }
-      catch (e) {
-        console.error('Failed to parse tool_use data', e)
+      else {
+        lastMsg.items.push({ type: 'tool_use', id, name, input })
       }
     }
-    else if (type === 'tool_result') {
-      try {
-        const toolData = typeof data === 'string' ? JSON.parse(data) : data
-        let existingIndex = -1
-        for (let i = lastMsg.items.length - 1; i >= 0; i--) {
-          const item = lastMsg.items[i]
-          if (item.type === 'tool_result' && item.name === toolData.name) {
-            existingIndex = i
-            break
-          }
-        }
-        if (existingIndex !== -1) {
-          lastMsg.items[existingIndex] = {
-            type: 'tool_result',
-            name: toolData.name,
-            output: toolData.output,
-          }
-        }
-        else {
-          lastMsg.items.push({
-            type: 'tool_result',
-            name: toolData.name,
-            output: toolData.output,
-          })
-        }
+    else if (event.type === 'TOOL_RESULT') {
+      const id = event.toolId
+      const name = event.toolName || 'tool'
+      const output = event.toolResult || ''
+
+      const existingIndex = lastMsg.items.findIndex(item => item.type === 'tool_result' && item.id && id && item.id === id)
+      if (existingIndex !== -1) {
+        lastMsg.items[existingIndex] = { type: 'tool_result', id, name, output }
       }
-      catch (e) {
-        console.error('Failed to parse tool_result data', e)
+      else {
+        lastMsg.items.push({ type: 'tool_result', id, name, output })
       }
+    }
+    else if (event.type === 'ERROR') {
+      lastMsg.status = 'error'
+      lastMsg.content += `\n\n(${event.error || '发生错误'})`
     }
   }
 
@@ -192,10 +165,10 @@ export const useChatStore = defineStore('chat', () => {
                 items.push({ type: 'thinking', thinking: c.thinking })
               }
               else if (c.type === 'tool_use') {
-                items.push({ type: 'tool_use', name: c.name, input: c.input })
+                items.push({ type: 'tool_use', id: c.id, name: c.name, input: c.input })
               }
               else if (c.type === 'tool_result') {
-                items.push({ type: 'tool_result', name: c.name, output: c.output })
+                items.push({ type: 'tool_result', id: c.id, name: c.name, output: c.output })
               }
             })
           }
@@ -290,7 +263,7 @@ export const useChatStore = defineStore('chat', () => {
     addMessage,
     addStreamingMessage,
     updateStreamingContent,
-    handleStreamingUpdate,
+    handleStreamingEvent,
     loadHistory,
     clearMessages,
   }
