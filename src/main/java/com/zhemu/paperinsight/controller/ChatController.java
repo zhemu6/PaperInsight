@@ -5,6 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zhemu.paperinsight.agent.core.ChatAgent;
 import com.zhemu.paperinsight.annotation.AuthCheck;
 import com.zhemu.paperinsight.model.dto.chat.ChatEvent;
+import com.zhemu.paperinsight.model.vo.ChatHistoryMessageVO;
+import com.zhemu.paperinsight.exception.ErrorCode;
+import com.zhemu.paperinsight.exception.ThrowUtils;
+import com.zhemu.paperinsight.service.PaperChatSessionService;
 import com.zhemu.paperinsight.service.SysUserService;
 import io.agentscope.core.agent.Event;
 import io.agentscope.core.agent.EventType;
@@ -46,6 +50,7 @@ public class ChatController {
     private final ChatAgent chatAgent;
     private final ObjectMapper objectMapper;
     private final SysUserService sysUserService;
+    private final PaperChatSessionService paperChatSessionService;
 
     /**
      * SSE 流式聊天接口。
@@ -60,8 +65,17 @@ public class ChatController {
     public Flux<ServerSentEvent<String>> chatStream(
             @RequestParam String chatId,
             @RequestParam String userQuery,
+            @RequestParam(required = false) String title,
             HttpServletRequest request) {
         long userId = sysUserService.getLoginUser(request).getId();
+        // Verify ownership (anti-IDOR)
+        if (paperChatSessionService.getOwnedSession(chatId, userId) == null) {
+            return Flux.just(ServerSentEvent.builder(serializeSafely(ChatEvent.error(0, "NO_AUTH", "No permission")))
+                    .build());
+        }
+
+        paperChatSessionService.ensureTitle(chatId, userId, title != null ? title : userQuery);
+        paperChatSessionService.touchSession(chatId, userId);
         log.info("Chat stream request - chatId: {}, userId: {}, userQuery: {}", chatId, userId, userQuery);
         // 1. 创建一个管道 sink 和 递增序号 seq
         Sinks.Many<ServerSentEvent<String>> sink = Sinks.many().unicast().onBackpressureBuffer();
@@ -84,7 +98,12 @@ public class ChatController {
      */
     @PostMapping("/stop")
     @AuthCheck
-    public void stopStream(@RequestParam String chatId) {
+    public void stopStream(@RequestParam String chatId, HttpServletRequest request) {
+        long userId = sysUserService.getLoginUser(request).getId();
+        // 不属于当前对话
+        if (paperChatSessionService.getOwnedSession(chatId, userId) == null) {
+            return;
+        }
         log.info("Received stop request for chat: {}", chatId);
         chatAgent.stop(chatId);
     }
@@ -119,73 +138,69 @@ public class ChatController {
 
     @GetMapping("/history")
     @AuthCheck
-    public List<HistoryItem> getHistory(@RequestParam String chatId) {
-        List<HistoryItem> list = chatAgent.getHistory(chatId).stream()
-                // 过滤掉系统消息（保留工具消息）
+    public List<ChatHistoryMessageVO> getHistory(@RequestParam String chatId, HttpServletRequest request) {
+        long userId = sysUserService.getLoginUser(request).getId();
+        ThrowUtils.throwIf(paperChatSessionService.getOwnedSession(chatId, userId) == null, ErrorCode.NO_AUTH_ERROR);
+
+        AtomicLong seq = new AtomicLong(0);
+        return chatAgent.getHistory(chatId).stream()
+                // 1. 过滤掉系统消息
                 .filter(msg -> msg.getRole() != null && !MsgRole.SYSTEM.equals(msg.getRole()))
-                // 过滤掉中断提示消息
+                // 2. 过滤掉打断消息
                 .filter(msg -> msg.getContent().stream()
                         .noneMatch(block -> block instanceof TextBlock
                                 && ((TextBlock) block).getText().contains("I noticed that you have interrupted me")))
                 .map(msg -> {
-                    String roleName = msg.getRole().name().toLowerCase();
-
-                    // 统一角色映射：将 model 或 assistant 统一为前端的 assistant
-                    String role = roleName;
-                    if ("model".equals(roleName) || "assistant".equals(roleName)) {
+                    // 3.1 新建一个历史 VO 对象
+                    ChatHistoryMessageVO vo = new ChatHistoryMessageVO();
+                    // 3.2 设置消息 id
+                    vo.setId(msg.getId());
+                    // 3.3 设置用户角色
+                    String role;
+                    if (MsgRole.USER.equals(msg.getRole())) {
+                        role = "user";
+                    } else {
                         role = "assistant";
-                    } else if ("tool".equals(roleName)) {
-                        role = "tool";
                     }
-
-                    var contentList = msg.getContent().stream()
-                            .filter(block -> block instanceof TextBlock
-                                    || block instanceof ThinkingBlock
-                                    || block instanceof ToolUseBlock
-                                    || block instanceof ToolResultBlock)
-                            .map(block -> {
-                                if (block instanceof ThinkingBlock) {
-                                    return new ThinkingItem("thinking", ((ThinkingBlock) block).getThinking());
-                                } else if (block instanceof ToolUseBlock) {
-                                    ToolUseBlock toolBlock = (ToolUseBlock) block;
-                                    return new ToolItem("tool_use", toolBlock.getId(), toolBlock.getName(),
-                                            String.valueOf(toolBlock.getInput()), null);
-                                } else if (block instanceof ToolResultBlock) {
-                                    ToolResultBlock toolBlock = (ToolResultBlock) block;
-                                    String output = extractToolOutput(toolBlock);
-                                    return new ToolItem("tool_result", toolBlock.getId(), toolBlock.getName(), null, output);
-                                } else if (block instanceof TextBlock) {
-                                    return new TextItem("text", ((TextBlock) block).getText());
+                    vo.setRole(role);
+                    // 3.4 设置对话历史
+                    List<ChatEvent> events = new ArrayList<>();
+                    if (MsgRole.USER.equals(msg.getRole())) {
+                        String text = msg.getTextContent();
+                        if (text != null && !text.isBlank()) {
+                            events.add(ChatEvent.text(seq.incrementAndGet(), text, false));
+                        }
+                    } else {
+                        // assistant: keep block order
+                        for (ContentBlock block : msg.getContent()) {
+                            if (block instanceof ThinkingBlock tb) {
+                                if (tb.getThinking() != null && !tb.getThinking().isBlank()) {
+                                    events.add(ChatEvent.thinking(seq.incrementAndGet(), tb.getThinking(), false));
                                 }
-                                return new TextItem("text", String.valueOf(block));
-                            })
-                            .map(item -> {
-                                if (MsgRole.TOOL.equals(msg.getRole()) && item instanceof TextItem textItem) {
-                                    return new ToolItem("tool_result", null, "tool", null, textItem.text());
+                            } else if (block instanceof ToolUseBlock tool) {
+                                if (tool.getName() != null && tool.getName().contains("__fragment__")) {
+                                    continue;
                                 }
-                                return item;
-                            })
-                            .toList();
-
-                    return new HistoryItem(msg.getId(), role, contentList);
-                })
-                .filter(item -> {
-                    if (item.content() instanceof List) {
-                        return !((List<?>) item.content()).isEmpty();
+                                events.add(ChatEvent.toolUse(seq.incrementAndGet(), tool.getId(), tool.getName(),
+                                        convertInput(tool.getInput())));
+                            } else if (block instanceof ToolResultBlock tool) {
+                                events.add(ChatEvent.toolResult(seq.incrementAndGet(), tool.getId(), tool.getName(),
+                                        extractToolOutput(tool)));
+                            } else if (block instanceof TextBlock tb) {
+                                if (tb.getText() != null && !tb.getText().isBlank()) {
+                                    events.add(ChatEvent.text(seq.incrementAndGet(), tb.getText(), false));
+                                }
+                            }
+                        }
                     }
-                    return true;
+                    vo.setEvents(events);
+                    return vo;
                 })
+                .filter(item -> item.getEvents() != null && !item.getEvents().isEmpty())
                 .toList();
-        return list;
     }
 
-    record HistoryItem(String id, String role, Object content) {}
-
-    record ThinkingItem(String type, String thinking) {}
-
-    record TextItem(String type, String text) {}
-
-    record ToolItem(String type, String id, String name, String input, String output) {}
+    // Legacy history item records removed in favor of ChatEvent-based history.
 
     /**
      * 转换事件

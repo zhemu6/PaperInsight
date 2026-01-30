@@ -253,4 +253,14 @@ public class ChatAgent {
         MysqlSession mysqlSession = new MysqlSession(dataSource, "paper_insight", null, true);
         return mysqlSession.getList(SimpleSessionKey.of(sessionId), "autoContextMemory_originalMessages", Msg.class);
     }
+
+    /**
+     * 删除 session 对应的 持久化记录
+     * @param sessionId sessionId
+     */
+    public void deleteSessionState(String sessionId) {
+        stop(sessionId);
+        MysqlSession mysqlSession = new MysqlSession(dataSource, "paper_insight", null, true);
+        mysqlSession.delete(SimpleSessionKey.of(sessionId));
+    }
 }
