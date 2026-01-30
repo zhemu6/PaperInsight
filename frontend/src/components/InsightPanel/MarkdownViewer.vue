@@ -12,6 +12,8 @@ const md = new MarkdownIt({
   html: true,
   linkify: true,
   typographer: true,
+  // Chat-style: treat single newlines as line breaks
+  breaks: true,
 })
 
 // Configure mermaid
@@ -26,9 +28,21 @@ const renderedContent = computed(() => {
   if (!props.content)
     return '<p class="text-gray-400 italic">暂无内容</p>'
 
-  // 1. 处理可能存在的转义换行符
-  let raw = props.content.replace(/\\n/g, '\n')
+  // 1. 处理可能存在的转义换行符/引号（有些模型会输出字面量 "\\n"、"\\\""）
+  let raw = props.content
+  console.log(raw)
+  // double-escaped newline/quote -> single-escaped
+  raw = raw.replace(/\\\\n/g, '\\n')
+  raw = raw.replace(/\\\\"/g, '\\"')
 
+  // single-escaped -> real chars
+  raw = raw.replace(/\\n/g, '\n')
+  raw = raw.replace(/\\"/g, '"')
+
+  // remaining escaped backslashes
+  raw = raw.replace(/\\\\/g, '\\')
+  console.log("~~~~~~~~~~~~~~~~2~~~~~~~~~~~~~~~~~~")
+  console.log(raw)
   // 2. 检测并移除可能包裹的 markdown 代码块标记
   const codeBlockRegex = /```(?:markdown)?\s+([\s\S]*?)\s+```/i
   const match = raw.match(codeBlockRegex)
@@ -45,7 +59,10 @@ const renderedContent = computed(() => {
   raw = raw.replace(/```mermaid\s+([\s\S]*?)\s+```/gi, (match, code) => {
     return `<div class="mermaid">${code}</div>`
   })
-
+  console.log("~~~~~~~~~~~~~~~~3~~~~~~~~~~~~~~~~~~")
+  console.log(raw)
+  console.log("~~~~~~~~~~~~~~~~md.render(raw)~~~~~~~~~~~~~~~~~~")
+  console.log(md.render(raw))
   return md.render(raw)
 })
 
@@ -73,8 +90,8 @@ onUpdated(() => {
 <template>
   <div class="markdown-body custom-markdown" v-html="renderedContent" />
 </template>
-
 <style scoped>
+/* 容器本身 */
 .markdown-body {
   box-sizing: border-box;
   min-width: 200px;
@@ -85,16 +102,19 @@ onUpdated(() => {
   font-family: inherit;
   font-size: 15px;
   line-height: 1.6;
-  color: var(--el-text-color-primary); /* Adapt to theme */
+  color: var(--el-text-color-primary);
+  overflow: visible; /* 防止 marker 被裁切 */
 }
 
-/* 覆盖 github-markdown-css 的默认样式以适应 Element Plus 主题 */
-:deep(.markdown-body p) {
-  margin-bottom: 12px;
+/* 段落间距 */
+:deep(p) {
+  margin: 0 0 12px;
 }
-:deep(.markdown-body h1),
-:deep(.markdown-body h2),
-:deep(.markdown-body h3) {
+
+/* 标题 */
+:deep(h1),
+:deep(h2),
+:deep(h3) {
   border-bottom: none;
   font-weight: 600;
   margin-top: 1.5em;
@@ -102,20 +122,57 @@ onUpdated(() => {
   color: var(--el-text-color-primary);
 }
 
-/* Dark mode specific overrides if github-markdown-css fails to detect class-based dark mode */
-:deep(.markdown-body pre) {
+/* 代码块 */
+:deep(pre) {
   background-color: var(--el-fill-color-light);
+  padding: 12px;
+  border-radius: 6px;
+  overflow: auto;
 }
 
-/* 修复列表在 ChatPanel 中被裁切的问题 */
-:deep(.markdown-body ul),
-:deep(.markdown-body ol) {
-  padding-left: 1.5em; /* 确保有足够空间显示标记 */
-  list-style-position: outside;
-  margin-bottom: 1em;
+/* ✅ 列表：极限兜底（覆盖各种 reset / UI 框架） */
+:deep(ol),
+:deep(ul) {
+  /* 把框架常见的 list-style:none 拉回来 */
+  list-style: initial !important;
+  list-style-position: outside !important;
+
+  /* 有些框架会把 padding/margin 清零 */
+  padding-left: 1.5em !important;
+  margin: 0 0 1em !important;
+
+  /* 有些框架会把 ol/ul 设成 flex 导致 marker 异常 */
+  display: block !important;
 }
 
-:deep(.markdown-body li) {
+/* 分别指定类型，避免 initial 变成 none 的情况 */
+:deep(ol) {
+  list-style-type: decimal !important;
+}
+:deep(ul) {
+  list-style-type: disc !important;
+}
+
+/* li 可能被框架改成 block / flex，导致 marker 不出现 */
+:deep(li) {
+  display: list-item !important;
   margin-top: 0.25em;
+}
+
+/* 兜底：强制 marker 颜色可见（有些主题会把 marker 变透明/淡） */
+:deep(li::marker) {
+  color: var(--el-text-color-primary) !important;
+  opacity: 1 !important;
+}
+
+/* 防止某些样式把 marker 内容清空 */
+:deep(ol > li::marker),
+:deep(ul > li::marker) {
+  content: normal !important;
+}
+
+/* 加粗 */
+:deep(strong) {
+  font-weight: 600;
 }
 </style>

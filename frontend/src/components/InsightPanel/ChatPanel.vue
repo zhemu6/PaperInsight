@@ -4,7 +4,8 @@ import { storeToRefs } from 'pinia'
 import { nextTick, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import { clearSession, startChatStream, stopChat } from '~/api/chat-sse'
+import { startChatStream, stopChat } from '~/api/chat-sse'
+import { createChatSession, deleteChatSession, listChatSessions } from '~/api/chat-session'
 import MarkdownViewer from '~/components/InsightPanel/MarkdownViewer.vue'
 import { useChatStore } from '~/stores/chat'
 import { useUserStore } from '~/stores/user'
@@ -28,6 +29,8 @@ const { messages, isLoading, currentChatId } = storeToRefs(chatStore)
 const inputMessage = ref('')
 const chatContainer = ref<HTMLElement | null>(null)
 let currentEventSource: EventSource | null = null
+
+const sessions = ref<Array<{ chatId: string, title?: string }>>([])
 
 // 监听外部 context 变化，自动填充（可选，或者只显示预览）
 watch(() => props.context, (val) => {
@@ -54,13 +57,86 @@ async function initChat() {
   if (!userStore.loginUser?.id)
     return
 
-  const userId = String(userStore.loginUser.id)
-  const chatId = `chat_${props.paperId}_${userId}`
-  await chatStore.loadHistory(chatId)
+  await refreshSessions(true)
 }
 
 // 监听 paperId 变化重新加载
 watch(() => props.paperId, initChat, { immediate: true })
+
+async function refreshSessions(autoSelect = false) {
+  const paperIdNum = Number(props.paperId)
+  if (!paperIdNum)
+    return
+
+  try {
+    const res = await listChatSessions(paperIdNum)
+    if (res.code === 0)
+      sessions.value = (res.data || []).map((s: any) => ({ chatId: s.chatId, title: s.title }))
+    else
+      sessions.value = []
+  }
+  catch (e) {
+    sessions.value = []
+  }
+
+  if (autoSelect) {
+    if (currentChatId.value && sessions.value.some(s => s.chatId === currentChatId.value)) {
+      try {
+        await chatStore.loadHistory(currentChatId.value)
+      }
+      catch (e: any) {
+        ElMessage.error(e?.message || t('chat.session.loadHistoryFailed'))
+      }
+      return
+    }
+    if (sessions.value.length > 0) {
+      try {
+        await chatStore.loadHistory(sessions.value[0].chatId)
+      }
+      catch (e: any) {
+        ElMessage.error(e?.message || t('chat.session.loadHistoryFailed'))
+      }
+      return
+    }
+    await createNewSession(true)
+  }
+}
+
+async function createNewSession(silent = false) {
+  const paperIdNum = Number(props.paperId)
+  if (!paperIdNum)
+    return
+  const res = await createChatSession(paperIdNum)
+  if (res.code === 0 && res.data?.chatId) {
+    const newId = String(res.data.chatId)
+    currentChatId.value = newId
+    chatStore.clearMessages()
+    try {
+      await chatStore.loadHistory(newId)
+    }
+    catch (e: any) {
+      if (!silent)
+        ElMessage.error(e?.message || t('chat.session.loadHistoryFailed'))
+    }
+    await refreshSessions(false)
+    if (!silent)
+      ElMessage.success(t('chat.session.created'))
+  }
+  else if (!silent) {
+    ElMessage.error(res.message || t('chat.session.createFailed'))
+  }
+}
+
+async function handleSessionChange() {
+  if (!currentChatId.value)
+    return
+  try {
+    await chatStore.loadHistory(currentChatId.value)
+  }
+  catch (e: any) {
+    ElMessage.error(e?.message || t('chat.session.loadHistoryFailed'))
+  }
+}
 
 /**
  * 停止生成
@@ -105,6 +181,9 @@ async function handleSend() {
   if (!question || isLoading.value)
     return
 
+  if (!currentChatId.value)
+    await createNewSession(true)
+
   // 如果有引用内容，拼接 Prompt
   let fullQuestion = question
   if (props.context) {
@@ -130,6 +209,7 @@ async function handleSend() {
     currentEventSource = startChatStream(
       currentChatId.value,
       fullQuestion,
+      question,
       (event) => {
         // Unified ChatEvent stream
         chatStore.handleStreamingEvent(event)
@@ -139,19 +219,20 @@ async function handleSend() {
         assistantMsg.status = 'done'
         currentEventSource = null
         isLoading.value = false // 结束加载
+        refreshSessions(false)
       },
       (error) => {
         // 错误
         console.error('SSE Error', error)
         assistantMsg.status = 'error'
-        assistantMsg.content += '\n\n(连接中断，请重试)'
+        assistantMsg.content += `\n\n(${t('chat.session.streamInterrupted')})`
         currentEventSource = null
         isLoading.value = false // 结束加载
       },
     )
   }
   catch (e) {
-    ElMessage.error('无法连接到聊天服务')
+    ElMessage.error(t('chat.session.connectFailed'))
     console.error(e)
     messages.value.pop() // 移除失败的消息
     isLoading.value = false
@@ -167,13 +248,17 @@ async function handleClear() {
     if (isLoading.value) {
       await handleStop()
     }
-    await clearSession(props.paperId)
-    chatStore.clearMessages()
-    ElMessage.success('会话已重置')
+    if (currentChatId.value) {
+      await deleteChatSession(currentChatId.value)
+      chatStore.clearMessages()
+      currentChatId.value = ''
+      await refreshSessions(true)
+      ElMessage.success(t('chat.session.deleted'))
+    }
   }
   catch (e) {
     console.error(e)
-    ElMessage.error('重置会话失败')
+    ElMessage.error(t('chat.session.deleteFailed'))
   }
 }
 
@@ -200,10 +285,53 @@ function onEnter(e: KeyboardEvent) {
 
 <template>
   <div class="h-full flex flex-col bg-white dark:bg-gray-800">
+    <div class="border-b border-gray-100 bg-white px-4 py-2 dark:border-gray-700 dark:bg-gray-800">
+      <div class="flex items-center gap-2">
+        <el-select
+          v-model="currentChatId"
+          class="w-56"
+          size="small"
+          :placeholder="t('chat.session.selectPlaceholder')"
+          @change="handleSessionChange"
+        >
+          <el-option
+            v-for="s in sessions"
+            :key="s.chatId"
+            :label="s.title || t('chat.session.untitled')"
+            :value="s.chatId"
+          />
+        </el-select>
+        <el-button size="small" type="primary" plain @click="createNewSession()">
+          {{ t('chat.session.create') }}
+        </el-button>
+      </div>
+    </div>
     <!-- Messages Area -->
     <div ref="chatContainer" class="custom-scrollbar flex-1 overflow-y-auto p-4 space-y-6">
       <div v-if="isLoading && messages.length === 0" class="h-full flex items-center justify-center">
         <div class="i-ri-loader-4-line animate-spin text-2xl text-gray-400" />
+      </div>
+
+      <div v-else-if="!isLoading && messages.length === 0" class="h-full flex items-center justify-center">
+        <div class="max-w-lg w-full px-4">
+          <div class="text-center text-2xl text-gray-800 font-semibold dark:text-gray-100">
+            {{ t('chat.emptyTitle') }}
+          </div>
+          <div class="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">
+            {{ t('chat.emptyHint') }}
+          </div>
+          <div class="mt-4 flex flex-wrap justify-center gap-2">
+            <el-button size="small" plain @click="inputMessage = t('chat.emptySuggestion1')">
+              {{ t('chat.emptySuggestion1') }}
+            </el-button>
+            <el-button size="small" plain @click="inputMessage = t('chat.emptySuggestion2')">
+              {{ t('chat.emptySuggestion2') }}
+            </el-button>
+            <el-button size="small" plain @click="inputMessage = t('chat.emptySuggestion3')">
+              {{ t('chat.emptySuggestion3') }}
+            </el-button>
+          </div>
+        </div>
       </div>
 
       <div
@@ -291,6 +419,10 @@ function onEnter(e: KeyboardEvent) {
                   <MarkdownViewer :content="item.text" />
                 </div>
               </div>
+            </div>
+
+            <div v-else-if="msg.content" class="text-sm">
+              <MarkdownViewer :content="msg.content" />
             </div>
 
             <!-- Loading 动画 -->
