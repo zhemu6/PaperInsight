@@ -27,10 +27,16 @@ myAxios.interceptors.response.use(
   (response) => {
     const { data } = response
 
+    const requestUrl = String(response.config?.url || '')
+    const responseUrl = String(response.request?.responseURL || '')
+    const isLoginCheckRequest = requestUrl.includes('/user/get/login') || responseUrl.includes('user/get/login')
+    const isAtRoot = window.location.pathname === '/'
+
     // 未登录
     if (data.code === 40100) {
       if (
-        !response.request.responseURL.includes('user/get/login')
+        !isLoginCheckRequest
+        && !isAtRoot
         && !window.location.pathname.includes('/common/login')
       ) {
         ElMessage.warning(i18n.global.t('error.unauthorized'))

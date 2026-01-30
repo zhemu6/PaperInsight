@@ -510,4 +510,79 @@ export default {
     notFound: '资源不存在',
     systemError: '系统错误',
   },
+
+  landing: {
+    badge: '为科研写作而生的 AI 论文解读平台',
+    nav: {
+      features: '能力',
+      how: '流程',
+      start: '开始使用',
+    },
+    hero: {
+      title1: '把论文读懂，',
+      title2: '更快，更系统。',
+      subtitle: '上传 PDF，自动生成结构化洞察与评分，并在阅读时用对话追问、定位证据与关键段落。',
+      ctaPrimary: '免费开始',
+      ctaSecondary: '已有账号登录',
+      point1: '结构化总结 / 创新点 / 方法',
+      point2: '阅读 + 引用 + 对话一体化',
+      point3: '分析完成自动通知',
+    },
+    preview: {
+      summary: '摘要与要点',
+      score: '评分与维度',
+      scoreTag: '综合评分',
+      chat: '对话追问',
+      notifications: '通知中心',
+    },
+    section: {
+      featuresTitle: '专为文献管理与解读设计的能力组合',
+      featuresSubtitle: '从阅读到洞察，从检索到对话，把研究流程集中在一个工作台。',
+      howTitle: '三步把 PDF 变成可用的研究材料',
+      howSubtitle: '不改变你的习惯，只把最耗时的环节交给系统。',
+    },
+    features: {
+      analysis: {
+        title: '深度解读与评分',
+        desc: '自动提炼论文贡献、方法与创新点，输出结构化总结与评分细则。',
+      },
+      search: {
+        title: '快速定位与检索',
+        desc: '在论文标题、作者、关键词与正文线索中快速找到你要的内容。',
+      },
+      reader: {
+        title: '沉浸式 PDF 阅读',
+        desc: '阅读时划词引用，一键带上下文进入对话，避免来回切窗口。',
+      },
+      workspace: {
+        title: '研究工作流工作台',
+        desc: '上传、管理、分析、通知、复看，全流程可追溯可复用。',
+      },
+    },
+    steps: {
+      upload: {
+        title: '上传并落库',
+        desc: '上传 PDF 后自动生成封面与元信息，整理到你的文件夹体系中。',
+      },
+      analyze: {
+        title: '自动分析',
+        desc: '多智能体并行抽取摘要、创新点、方法与评分，生成可复看的洞察。',
+      },
+      chat: {
+        title: '阅读中追问',
+        desc: '对结果提出追问，或选中原文片段进行引用式对话，定位依据。',
+      },
+    },
+    cta: {
+      title: '从今天开始，把文献综述变成可控的流程',
+      subtitle: '登录后进入“我的论文”，上传第一篇 PDF 即可体验完整闭环。',
+      primary: '注册并进入系统',
+      secondary: '登录',
+    },
+    footer: {
+      privacy: '隐私',
+      terms: '条款',
+      contact: '联系',
+    },
+  },
 }

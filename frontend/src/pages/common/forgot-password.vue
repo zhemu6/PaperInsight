@@ -20,6 +20,10 @@ const toggleDark = useToggle(isDark)
 const currentBgImage = computed(() => isDark.value ? bgImageDark : bgImage)
 
 const router = useRouter()
+
+function goHome() {
+  router.push('/')
+}
 const form = reactive({
   email: '',
   code: '',
@@ -151,18 +155,27 @@ meta:
 
     <!-- 右侧：重置密码表单 -->
     <div class="relative w-full flex items-center justify-center p-8 md:w-1/2 md:p-16">
-      <!-- 主题/语言切换按钮 -->
-      <div class="absolute right-6 top-6 flex gap-2">
+      <!-- 右上角：主页/主题/语言（与登录/注册页对齐） -->
+      <div class="absolute right-6 top-6 flex items-center gap-3">
         <button
-          class="h-9 w-9 flex items-center justify-center rounded-lg bg-gray-100 transition-colors dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
+          class="h-10 w-10 flex items-center justify-center rounded-full bg-gray-100 transition-colors dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
+          :title="$t('nav.home')"
+          @click="goHome"
+        >
+          <i class="i-ep-house text-gray-600 dark:text-gray-300" />
+        </button>
+        <button
+          class="h-10 w-10 flex items-center justify-center rounded-full bg-gray-100 transition-colors dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
           :title="isDark ? 'Light Mode' : 'Dark Mode'"
           @click="toggleDark()"
         >
-          <Moon v-if="!isDark" class="h-5 w-5 text-gray-600" />
-          <Sunny v-else class="h-5 w-5 text-yellow-500" />
+          <el-icon :size="18" class="text-gray-600 dark:text-gray-300">
+            <Moon v-if="!isDark" />
+            <Sunny v-else />
+          </el-icon>
         </button>
         <button
-          class="h-9 w-9 flex items-center justify-center rounded-lg bg-gray-100 text-sm font-medium transition-colors dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
+          class="h-10 w-10 flex items-center justify-center rounded-full bg-gray-100 text-sm text-gray-600 font-medium transition-colors dark:bg-gray-700 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-600"
           @click="toggleLocale()"
         >
           {{ getLocale() === 'zh' ? 'EN' : '中' }}
