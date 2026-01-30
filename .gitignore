@@ -3,7 +3,8 @@ application.yml
 application-dev.yml
 application-prod.yml
 .env.example
-
+# Local research / vendor sources (not part of app)
+agentscope-java-analysis/
 
 
 
@@ -43,3 +44,5 @@ build/
 
 ### VS Code ###
 .vscode/
+
+

@@ -12,6 +12,19 @@ export interface ChatMessage {
   id: string
 }
 
+export interface ChatEvent {
+  type: 'TEXT' | 'THINKING' | 'TOOL_USE' | 'TOOL_RESULT' | 'ERROR' | 'COMPLETE' | 'INTERRUPTED'
+  seq?: number
+  content?: string
+  incremental?: boolean
+  toolId?: string
+  toolName?: string
+  toolInput?: Record<string, any>
+  toolResult?: string
+  errorCode?: string
+  error?: string
+}
+
 /**
  * 启动流式对话
  * @param chatId 对话ID (Session ID)
@@ -25,56 +38,42 @@ export interface ChatMessage {
 export function startChatStream(
   chatId: string,
   userQuery: string,
-  userId: string,
-  onMessage: (data: any, type: string) => void,
+  titleCandidate: string | undefined,
+  onEvent: (event: ChatEvent) => void,
   onDone: () => void,
-  _onError: (error: any) => void,
+  onError: (error: any) => void,
 ): EventSource {
   // 更新为新的 API 路径: /assistant/chat
   // 参数: chatId, userQuery, userId
-  const url = `/api/assistant/chat?chatId=${chatId}&userQuery=${encodeURIComponent(userQuery)}&userId=${userId}`
+  const url = `/api/assistant/chat?chatId=${chatId}&userQuery=${encodeURIComponent(userQuery)}${titleCandidate ? `&title=${encodeURIComponent(titleCandidate)}` : ''}`
   const eventSource = new EventSource(url)
 
-  // 监听默认的消息事件 (Text)
+  let sawTerminal = false
+
+  // Unified JSON ChatEvent stream
   eventSource.onmessage = (event) => {
-    if (event.data) {
-      onMessage(event.data, 'text')
+    if (!event.data)
+      return
+
+    try {
+      const parsed = JSON.parse(event.data) as ChatEvent
+      onEvent(parsed)
+      if (parsed.type === 'COMPLETE' || parsed.type === 'ERROR' || parsed.type === 'INTERRUPTED') {
+        sawTerminal = true
+        eventSource.close()
+        onDone()
+      }
+    }
+    catch (e) {
+      console.error('Failed to parse ChatEvent', e)
     }
   }
 
-  // 监听思考过程事件 (Thinking)
-  eventSource.addEventListener('thinking', (event) => {
-    if (event.data) {
-      onMessage(event.data, 'thinking')
-    }
-  })
-
-  // 监听工具调用事件
-  eventSource.addEventListener('tool_use', (event) => {
-    if (event.data) {
-      onMessage(event.data, 'tool_use')
-    }
-  })
-
-  // 监听工具结果事件
-  eventSource.addEventListener('tool_result', (event) => {
-    if (event.data) {
-      onMessage(event.data, 'tool_result')
-    }
-  })
-
-  // 仍然保留 done 事件监听
-  eventSource.addEventListener('done', () => {
-    eventSource.close()
-    onDone()
-  })
-
   // 处理连接关闭/错误
-  // 由于后端直接关闭流会导致浏览器触发 error，这里我们将其视为一次会话结束
-  eventSource.onerror = (_error) => {
-    // console.error('SSE Stream closed or error')
+  eventSource.onerror = (error) => {
     eventSource.close()
-    onDone()
+    if (!sawTerminal)
+      onError(error)
   }
 
   return eventSource
@@ -89,7 +88,14 @@ export async function getChatHistory(chatId: string) {
   if (!response.ok) {
     throw new Error('Failed to fetch history')
   }
-  return await response.json()
+  const data = await response.json()
+  // When backend throws BusinessException, GlobalExceptionHandler returns BaseResponse JSON
+  if (data && typeof data === 'object' && !Array.isArray(data) && 'code' in data) {
+    if ((data as any).code !== 0)
+      throw new Error((data as any).message || 'Failed to fetch history')
+    return (data as any).data
+  }
+  return data
 }
 
 /**

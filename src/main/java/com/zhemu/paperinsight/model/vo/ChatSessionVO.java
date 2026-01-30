@@ -1,25 +1,19 @@
 package com.zhemu.paperinsight.model.vo;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import lombok.Data;
 
-/**
- * 对话会话 VO
- * 
- * @author lushihao
- */
 @Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class ChatSessionVO implements Serializable {
-    private Long id;
-    private String sessionId;
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private String chatId;
+    private Long paperId;
     private String title;
-    private LocalDateTime lastMessageTime;
+    private LocalDateTime lastMessageAt;
+    private LocalDateTime createTime;
 }

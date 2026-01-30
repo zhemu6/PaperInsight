@@ -15,6 +15,7 @@ import io.agentscope.core.model.Model;
 import io.agentscope.core.rag.Knowledge;
 import io.agentscope.core.rag.RAGMode;
 import io.agentscope.core.session.mysql.MysqlSession;
+import io.agentscope.core.state.SimpleSessionKey;
 import io.agentscope.core.tool.Toolkit;
 import io.agentscope.core.tool.mcp.McpClientBuilder;
 import io.agentscope.core.tool.mcp.McpClientWrapper;
@@ -247,25 +248,19 @@ public class ChatAgent {
      * @return 消息列表
      */
     public List<Msg> getHistory(String sessionId) {
-        Toolkit toolkit = new Toolkit();
-        // 尝试注册基础工具组，如果存在
-        if (cachedToolGroups.containsKey("common-tools")) {
-            List<Object> tools = cachedToolGroups.get("common-tools");
-            tools.forEach(toolkit::registerTool);
-        }
-
-        // 上下文管理配置
-        AutoContextConfig autoContextConfig = AutoContextConfig.builder().tokenRatio(0.4).lastKeep(10).build();
-        // 智能上下文内存管理系统，自动压缩、卸载和摘要对话历史。
-        AutoContextMemory memory = new AutoContextMemory(autoContextConfig, model);
+        // 读取 AutoContextMemory 的 originalMessages（完整、未压缩的历史）
+        // 对应 agentscope_sessions.state_key = "autoContextMemory_originalMessages"
         MysqlSession mysqlSession = new MysqlSession(dataSource, "paper_insight", null, true);
+        return mysqlSession.getList(SimpleSessionKey.of(sessionId), "autoContextMemory_originalMessages", Msg.class);
+    }
 
-        ReActAgent agent = createAgent(toolkit, memory, "");
-
-        if (agent.loadIfExists(mysqlSession, sessionId)) {
-            // Memory 中已经加载了历史条目
-            return memory.getMessages();
-        }
-        return List.of();
+    /**
+     * 删除 session 对应的 持久化记录
+     * @param sessionId sessionId
+     */
+    public void deleteSessionState(String sessionId) {
+        stop(sessionId);
+        MysqlSession mysqlSession = new MysqlSession(dataSource, "paper_insight", null, true);
+        mysqlSession.delete(SimpleSessionKey.of(sessionId));
     }
 }
