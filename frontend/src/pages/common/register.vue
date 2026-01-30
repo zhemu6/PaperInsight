@@ -20,6 +20,10 @@ const toggleDark = useToggle(isDark)
 const currentBgImage = computed(() => isDark.value ? bgImageDark : bgImage)
 
 const router = useRouter()
+
+function goHome() {
+  router.push('/')
+}
 const form = reactive({
   userAccount: '',
   userPassword: '',
@@ -156,6 +160,13 @@ meta:
     <div class="relative w-full flex items-center justify-center bg-white p-8 md:w-1/2 dark:bg-gray-900 md:p-16">
       <!-- 右上角：主题和语言切换 -->
       <div class="absolute right-6 top-6 flex items-center gap-3">
+        <button
+          class="h-10 w-10 flex items-center justify-center rounded-full bg-gray-100 transition-colors dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
+          :title="$t('nav.home')"
+          @click="goHome"
+        >
+          <i class="i-ep-house text-gray-600 dark:text-gray-300" />
+        </button>
         <button
           class="h-10 w-10 flex items-center justify-center rounded-full bg-gray-100 transition-colors dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
           :title="isDark ? 'Light Mode' : 'Dark Mode'"

@@ -21,6 +21,7 @@ declare module 'vue-router/auto-routes' {
     '/': RouteRecordInfo<'/', '/', Record<never, never>, Record<never, never>>,
     '/common/403': RouteRecordInfo<'/common/403', '/common/403', Record<never, never>, Record<never, never>>,
     '/common/forgot-password': RouteRecordInfo<'/common/forgot-password', '/common/forgot-password', Record<never, never>, Record<never, never>>,
+    '/common/landing': RouteRecordInfo<'/common/landing', '/common/landing', Record<never, never>, Record<never, never>>,
     '/common/login': RouteRecordInfo<'/common/login', '/common/login', Record<never, never>, Record<never, never>>,
     '/common/nopermissions': RouteRecordInfo<'/common/nopermissions', '/common/nopermissions', Record<never, never>, Record<never, never>>,
     '/common/register': RouteRecordInfo<'/common/register', '/common/register', Record<never, never>, Record<never, never>>,

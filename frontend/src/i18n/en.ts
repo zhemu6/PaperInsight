@@ -512,4 +512,79 @@ export default {
     notFound: 'Resource not found',
     systemError: 'System Error',
   },
+
+  landing: {
+    badge: 'An AI paper reading workspace for researchers',
+    nav: {
+      features: 'Features',
+      how: 'How it works',
+      start: 'Get started',
+    },
+    hero: {
+      title1: 'Understand papers,',
+      title2: 'faster and deeper.',
+      subtitle: 'Upload PDFs to generate structured insights and scoring, then ask follow-ups with evidence while reading.',
+      ctaPrimary: 'Start free',
+      ctaSecondary: 'Log in',
+      point1: 'Summary / innovations / methods',
+      point2: 'Reader + citations + chat in one place',
+      point3: 'Notifications when analysis finishes',
+    },
+    preview: {
+      summary: 'Key summary',
+      score: 'Scores & dimensions',
+      scoreTag: 'Overall score',
+      chat: 'Ask with context',
+      notifications: 'Notification center',
+    },
+    section: {
+      featuresTitle: 'A focused set of tools for reading and synthesis',
+      featuresSubtitle: 'From reading to insights, from search to follow-up questions — in one workspace.',
+      howTitle: 'Turn a PDF into usable research notes in 3 steps',
+      howSubtitle: 'Keep your habits. Let the system do the heavy lifting.',
+    },
+    features: {
+      analysis: {
+        title: 'Deep analysis & scoring',
+        desc: 'Extract contributions, methods, and novelty with structured summaries and scoring details.',
+      },
+      search: {
+        title: 'Fast search & pinpointing',
+        desc: 'Find what you need across titles, authors, keywords, and content signals.',
+      },
+      reader: {
+        title: 'Immersive PDF reader',
+        desc: 'Select text to cite and jump into chat with context — no tab hopping.',
+      },
+      workspace: {
+        title: 'Research workflow hub',
+        desc: 'Upload, manage, analyze, get notified, and revisit insights — all traceable.',
+      },
+    },
+    steps: {
+      upload: {
+        title: 'Upload & organize',
+        desc: 'Upload a PDF, generate a cover and metadata, and file it into your folders.',
+      },
+      analyze: {
+        title: 'Auto-analyze',
+        desc: 'Multi-agent analysis produces summary, novelty, methods, and scoring you can revisit.',
+      },
+      chat: {
+        title: 'Ask while reading',
+        desc: 'Ask follow-ups or cite selected passages to keep answers grounded in evidence.',
+      },
+    },
+    cta: {
+      title: 'Make literature review a controllable workflow',
+      subtitle: 'Log in to “My Papers” and upload your first PDF to experience the full loop.',
+      primary: 'Register and enter',
+      secondary: 'Log in',
+    },
+    footer: {
+      privacy: 'Privacy',
+      terms: 'Terms',
+      contact: 'Contact',
+    },
+  },
 }
